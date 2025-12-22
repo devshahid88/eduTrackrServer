@@ -51,6 +51,18 @@ export class AssignmentController {
 
       const assignment = await this.assignmentUseCase.createAssignment(assignmentData);
 
+      // Trigger Notification
+      // Assuming we can get students of the course/department.
+      // For now, simpler approach might be needed or fan-out in UseCase like Announcement.
+      // Ideally AssignmentUseCase handles this, but sticking to Controller for quick integration as planned.
+      // Wait, Plan said "Inject NotificationUseCase". 
+      // Actually, better to do this in UseCase to keep controller clean? 
+      // Let's check AssignmentUseCase first. If it has repositories, do it there.
+      // If not, doing it here requires injecting Repositories into Controller which is messy.
+      
+      // Checking AssignmentUseCase...
+      // It likely has Repository access.
+      
       res.status(HttpStatus.CREATED).json({
         success: true,
         message: 'Assignment created successfully',

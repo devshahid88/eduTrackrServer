@@ -27,10 +27,10 @@ export function initializeSocket(io: Server) {
     const { userId, userModel } = socket.data;
     chatUseCase.handleUserConnection(socket, userId, userModel);
 
-    socket.on('sendMessage', async (data: { chatId: string; receiver: string; receiverModel: 'Teacher' | 'Student'; message: string; replyTo?: string }, callback) => {
+    socket.on('sendMessage', async (data: { chatId: string; receiver: string; receiverModel: 'Teacher' | 'Student'; message: string; mediaUrl?: string; mediaType?: string; replyTo?: string }, callback) => {
       try {
-        if (!data.chatId || !data.receiver || !data.receiverModel || !data.message) {
-          throw new Error('Missing required fields: chatId, receiver, receiverModel, or message');
+        if (!data.chatId || !data.receiver || !data.receiverModel || (!data.message && !data.mediaUrl)) {
+          throw new Error('Missing required fields: chatId, receiver, receiverModel, and either message or mediaUrl');
         }
 
         const newMessage = await chatUseCase.saveMessage(
@@ -39,11 +39,12 @@ export function initializeSocket(io: Server) {
           userModel,
           data.receiver,
           data.receiverModel,
-          data.message,
-          undefined,
-          undefined,
+          data.message || '',
+          data.mediaUrl,
+          data.mediaType,
           data.replyTo
         );
+
         socket.emit('messageSent', newMessage);
         
         if (callback && typeof callback === 'function') {

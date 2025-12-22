@@ -9,9 +9,21 @@ import { isValidObjectId } from 'mongoose';
 
 const router = Router();
 
+import { NotificationUseCase } from '../../application/useCases/NotificationUseCase';
+import { NotificationRepository } from '../../infrastructure/repositories/NotificationRepository';
+import { StudentRepository } from '../../infrastructure/repositories/studentRepository';
+
 // Initialize dependencies
 const assignmentRepository = new AssignmentRepository();
-const assignmentUseCase = new AssignmentUseCase(assignmentRepository);
+const notificationRepository = new NotificationRepository();
+const studentRepository = new StudentRepository();
+
+const notificationUseCase = new NotificationUseCase(notificationRepository);
+const assignmentUseCase = new AssignmentUseCase(
+  assignmentRepository, 
+  notificationUseCase, 
+  studentRepository
+);
 const assignmentController = new AssignmentController(assignmentUseCase);
 
 // Middleware to validate ObjectId

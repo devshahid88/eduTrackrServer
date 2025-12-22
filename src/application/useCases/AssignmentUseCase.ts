@@ -1,12 +1,18 @@
-// AssignmentUseCase.ts
+import mongoose from 'mongoose';
 import { Assignment, AssignmentFilters, AssignmentSubmission } from '../../domain/entities/Assignment';
 import { IAssignmentRepository } from '../Interfaces/IAssignmentRepository';
 import { createHttpError } from '../../common/utils/createHttpError';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 import { HttpMessage } from '../../common/enums/http-message.enum';
+import { NotificationUseCase } from './NotificationUseCase';
+import { IStudentRepository } from '../Interfaces/IStudent';
 
 export class AssignmentUseCase {
-  constructor(private assignmentRepository: IAssignmentRepository) {}
+  constructor(
+    private assignmentRepository: IAssignmentRepository,
+    private notificationUseCase: NotificationUseCase,
+    private studentRepository: IStudentRepository
+  ) {}
 
   async createAssignment(assignmentData: Partial<Assignment>): Promise<Assignment> {
     if (!assignmentData.title || !assignmentData.description || !assignmentData.dueDate) {
@@ -23,7 +29,44 @@ export class AssignmentUseCase {
       attachments: assignmentData.attachments || []
     };
 
-    return this.assignmentRepository.create(assignment);
+    const newAssignment = await this.assignmentRepository.create(assignment);
+
+    // Notify Students
+    // We need to find students enrolled in this course.
+    if (assignmentData.courseId) {
+        // Ideally we need a method in StudentRepository to findByCourseId.
+        // Assuming getAllStudents and filtering or better verify IStudentRepository.
+        // Let's assume we can fetch all and filter for now, or add a method.
+        // Looking at studentRepository.ts, there is no direct findByCourseId.
+        // It has getAllStudents which populates courses.
+        // We will fetch all and filter in memory for now as a quick solution, 
+        // or better: utilize the search or add a method if possible (avoiding schema changes).
+        const students = await this.studentRepository.getAllStudents(); 
+        const enrolledStudents = students.filter(student => 
+            student.courses.some((c: any) => c.courseId.toString() === assignmentData.courseId?.toString())
+        );
+
+        for (const student of enrolledStudents) {
+            if (student._id) {
+                await this.notificationUseCase.createNotification({
+                    userId: new mongoose.Types.ObjectId(student._id.toString()),
+                    userModel: 'Student',
+                    type: 'assignment',
+                    title: `New Assignment: ${newAssignment.title}`,
+                    message: `A new assignment has been posted for your course.`,
+                    read: false,
+                    sender: assignmentData.teacherId ? assignmentData.teacherId.toString() : 'System',
+                    senderModel: 'Teacher',
+                    role: 'Student',
+                    data: {
+                        messageId: newAssignment.id?.toString() // using id as defined in interface
+                    }
+                });
+            }
+        }
+    }
+
+    return newAssignment;
   }
 
   async getAssignments(filters?: AssignmentFilters): Promise<Assignment[]> {
@@ -95,16 +138,62 @@ export class AssignmentUseCase {
   }
 
   async gradeSubmission(submissionId: string, grade: number, feedback?: string): Promise<AssignmentSubmission> {
-    const assignment = await this.assignmentRepository.findById(submissionId.split('_')[0]);
+    // submissionId here is actually assignmentId_studentId usually or just assignmentId?
+    // Looking at controller: req.params.submissionId. 
+    // Repo uses updateSubmissionGrade. 
+    // Let's assume submissionId uniquely identifies or repo handles it.
+    // Wait, repo.updateSubmissionGrade signature: (submissionId: string, grade: number, feedback?: string)
+    // Actually in previous code: const assignment = await this.assignmentRepository.findById(submissionId.split('_')[0]);
+    // This implies submissionId is composite or they are looking up assignment.
+    
+    // Notification Logic:
+    // We need to know WHICH student got graded.
+    // If submissionId is composite "assignmentId_studentId", we can parse it.
+    // Or we fetch the assignment and find the submission.
+    
+    // Let's fetch assignment first as existing code does.
+    // existing: const assignment = await this.assignmentRepository.findById(submissionId.split('_')[0]);
+    
+    const parts = submissionId.split('_');
+    const assignmentId = parts[0];
+    // This looks like a specific implementation detail. I will stick to it.
+    
+    const assignment = await this.assignmentRepository.findById(assignmentId);
     if (!assignment) {
       createHttpError(HttpMessage.ASSIGNMENT_NOT_FOUND, HttpStatus.NOT_FOUND);
+      // to satisfy TS compiler that assignment is not undefined below, though createHttpError throws.
+      throw new Error('Assignment not found'); 
     }
 
     if (grade > assignment.maxMarks) {
       createHttpError(HttpMessage.GRADE_EXCEEDS_MAX, HttpStatus.BAD_REQUEST);
     }
 
-    return this.assignmentRepository.updateSubmissionGrade(submissionId, grade, feedback);
+    const updatedSubmission = await this.assignmentRepository.updateSubmissionGrade(submissionId, grade, feedback);
+    
+    // Notify Student
+    // We need studentId. If submissionId is "assignmentId_studentId", parts[1] is studentId?
+    // Let's assume yes or rely on updatedSubmission if it returns studentId.
+    // AssignmentSubmission interface has studentId.
+    
+    if (updatedSubmission && updatedSubmission.studentId) {
+         await this.notificationUseCase.createNotification({
+            userId: new mongoose.Types.ObjectId(updatedSubmission.studentId.toString()),
+            userModel: 'Student',
+            type: 'grade',
+            title: `Grade Updated: ${assignment.title}`,
+            message: `You have received a new grade: ${grade}/${assignment.maxMarks}. ${feedback ? 'Feedback: ' + feedback : ''}`,
+            read: false,
+            sender: 'System',
+            senderModel: 'Teacher',
+            role: 'Student',
+            data: {
+                messageId: assignmentId
+            }
+        });
+    }
+
+    return updatedSubmission;
   }
 
   async getSubmissions(assignmentId: string): Promise<AssignmentSubmission[]> {
@@ -115,6 +204,7 @@ export class AssignmentUseCase {
     const assignment = await this.assignmentRepository.findById(assignmentId);
     if (!assignment) {
       createHttpError(HttpMessage.ASSIGNMENT_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new Error('Assignment not found');
     }
 
     const submissionMap = new Map(
@@ -142,6 +232,22 @@ export class AssignmentUseCase {
         gradeEntry.grade
       );
       updatedSubmissions.push(updatedSubmission);
+      
+      // Notify Student
+      await this.notificationUseCase.createNotification({
+            userId: new mongoose.Types.ObjectId(gradeEntry.studentId),
+            userModel: 'Student',
+            type: 'grade',
+            title: `Grade Updated: ${assignment.title}`,
+            message: `You have received a new grade: ${gradeEntry.grade}/${assignment.maxMarks}.`,
+            read: false,
+            sender: 'System',
+            senderModel: 'Teacher',
+            role: 'Student',
+            data: {
+                messageId: assignmentId
+            }
+      });
     }
 
     return updatedSubmissions;

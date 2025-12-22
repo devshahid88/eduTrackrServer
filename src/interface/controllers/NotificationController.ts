@@ -34,7 +34,7 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
 
     const notifications = await this.notificationUseCase.getNotifications(
       userId as string,
-      normalizedUserModel as 'Teacher' | 'Student'
+      normalizedUserModel as 'Teacher' | 'Student' | 'Admin'
     );
 
     // Transform notifications to match frontend expectations
@@ -93,17 +93,20 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
 
   async markAllAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId, userModel } = req.body;
+      // Extract from req.user, NOT req.body
+      const { id: userId, role: userModel } = req.user || {};
 
       if (!userId || !userModel) {
         res.status(HttpStatus.BAD_REQUEST).json({
-          message: 'Missing required fields',
+          message: 'Missing required user information',
           success: false
         });
         return;
       }
 
-      if (!['Teacher', 'Student'].includes(userModel)) {
+      const normalizedUserModel = userModel.charAt(0).toUpperCase() + userModel.slice(1).toLowerCase();
+
+      if (!['Teacher', 'Student', 'Admin'].includes(normalizedUserModel)) {
         res.status(HttpStatus.BAD_REQUEST).json({
           message: 'Invalid user model',
           success: false
@@ -111,7 +114,7 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
         return;
       }
 
-      await this.notificationUseCase.markAllAsRead(userId, userModel);
+      await this.notificationUseCase.markAllAsRead(userId, normalizedUserModel as 'Teacher' | 'Student' | 'Admin');
 
       res.status(HttpStatus.OK).json({
         message: 'All notifications marked as read',

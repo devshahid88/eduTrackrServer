@@ -5,7 +5,6 @@ export class AiRepository {
 
     constructor() {
         const apiKey = process.env.GEMINI_API_KEY;
-        console.log('api key ', apiKey);
         
         if (!apiKey) {
             throw new Error('GEMINI_API_KEY is not configured in environment variables');

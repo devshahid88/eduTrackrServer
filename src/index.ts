@@ -12,6 +12,8 @@ import AdminRoutes from './interface/routes/AdminRoutes';
 import TeacherRoutes from './interface/routes/TeacherRoutes';
 import DepartmentRoutes from './interface/routes/departmentRoutes';
 import CourseRoutes from './interface/routes/courseRoutes';
+import ResourceRoutes from './interface/routes/ResourceRoutes';
+import AnnouncementRoutes from './interface/routes/AnnouncementRoutes';
 import ScheduleRoutes from './interface/routes/ScheduleRoutes';
 import AssignmentRoute from './interface/routes/AssignmentRoute';
 import AiRoutes from './interface/routes/AiRoute';
@@ -19,6 +21,16 @@ import  createNotificationRoutes  from './interface/routes/NotificationRoutes';
 import { createChatRoutes } from './interface/routes/ChatRoutes';
 import { initializeSocket } from './infrastructure/config/socket';
 import ConcernRoutes from './interface/routes/ConcernRoutes';
+import { AnnouncementRepository } from './infrastructure/repositories/AnnouncementRepository';
+import { NotificationRepository } from './infrastructure/repositories/NotificationRepository';
+import { StudentRepository } from './infrastructure/repositories/studentRepository';
+import { TeacherRepository } from './infrastructure/repositories/TeacherRepository';
+import { NotificationUseCase } from './application/useCases/NotificationUseCase';
+import { AnnouncementUseCase } from './application/useCases/AnnouncementUseCase';
+import { AnnouncementController } from './interface/controllers/AnnouncementController';
+import { AssignmentRepository } from './infrastructure/repositories/AssignmentRepository';
+import { AssignmentUseCase } from './application/useCases/AssignmentUseCase';
+import { AssignmentController } from './interface/controllers/AssignmentController';
 import mongoose from 'mongoose';
 const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 
@@ -71,6 +83,8 @@ app.use('/api/messages', createChatRoutes(io));
 app.use('/api/ai', AiRoutes);
 app.use('/api/notifications', createNotificationRoutes);
 app.use('/api/concerns', ConcernRoutes);
+app.use('/api/resources', ResourceRoutes);
+app.use('/api/announcements', AnnouncementRoutes);
 
 const APP_ID = process.env.YOUR_AGORA_APP_ID;
 const APP_CERTIFICATE =process.env.YOUR_AGORA_APP_CERTIFICATE;
@@ -110,7 +124,31 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 
-const PORT = process.env.PORT || 3000;
+// Initialize Repositories
+const announcementRepository = new AnnouncementRepository();
+const notificationRepository = new NotificationRepository();
+const studentRepository = new StudentRepository();
+const teacherRepository = new TeacherRepository();
+const assignmentRepository = new AssignmentRepository(); // Added
+
+// Initialize UseCases
+const notificationUseCase = new NotificationUseCase(notificationRepository);
+const announcementUseCase = new AnnouncementUseCase(
+  announcementRepository, 
+  notificationUseCase, 
+  studentRepository, 
+  teacherRepository
+);
+const announcementController = new AnnouncementController(announcementUseCase);
+const assignmentUseCase = new AssignmentUseCase(
+  assignmentRepository,
+  notificationUseCase,
+  studentRepository
+);
+const assignmentController = new AssignmentController(assignmentUseCase);
+
+const PORT = process.env.PORT || 3003;
+
 httpServer.listen(PORT, () => {
-  console.log(`⚡ Server running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

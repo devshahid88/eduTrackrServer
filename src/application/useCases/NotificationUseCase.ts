@@ -16,7 +16,7 @@ export class NotificationUseCase {
     }
   }
 
-  async getNotifications(userId: string, userModel: 'Teacher' | 'Student'): Promise<INotification[]> {
+  async getNotifications(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<INotification[]> {
     try {
       return await this.notificationRepository.getNotifications(userId, userModel);
     } catch (error) {
@@ -34,7 +34,7 @@ export class NotificationUseCase {
     }
   }
 
-  async markAllAsRead(userId: string, userModel: 'Teacher' | 'Student'): Promise<void> {
+  async markAllAsRead(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<void> {
     try {
       await this.notificationRepository.markAllAsRead(userId, userModel);
     } catch (error) {

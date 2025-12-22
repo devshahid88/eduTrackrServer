@@ -66,6 +66,7 @@ export class AuthController {
   }
 
   async loginTeacher(req: Request, res: Response, next: NextFunction): Promise<void> {
+    console.log('it is techer ')
     try {
       const { email, password } = req.body;
       if (!email || !password) {

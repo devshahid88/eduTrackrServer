@@ -46,8 +46,9 @@ export class ChatController {
 
   async sendMessage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { chatId, sender, senderModel, receiver, receiverModel, message, replyTo } = req.body;
-      const mediaUrl = req.file?.path;
+      const { chatId, sender, senderModel, receiver, receiverModel, message, replyTo, mediaUrl: bodyMediaUrl } = req.body;
+      const mediaUrl = req.file?.path || bodyMediaUrl;
+
 
       if (!chatId || !sender || !senderModel || !receiver || !receiverModel) {
         res.status(HttpStatus.BAD_REQUEST).json({ message: 'Missing required fields', success: false });

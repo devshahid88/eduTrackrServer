@@ -13,7 +13,7 @@ export class NotificationRepository implements INotificationRepository {
     }
   }
 
-  async getNotifications(userId: string, userModel: 'Teacher' | 'Student'): Promise<INotification[]> {
+  async getNotifications(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<INotification[]> {
     try {
       // Normalize userModel to ensure proper case
       const normalizedUserModel = userModel.charAt(0).toUpperCase() + userModel.slice(1).toLowerCase();
@@ -51,7 +51,7 @@ export class NotificationRepository implements INotificationRepository {
     }
   }
 
-  async markAllAsRead(userId: string, userModel: 'Teacher' | 'Student'): Promise<void> {
+  async markAllAsRead(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<void> {
     try {
       await Notification.updateMany(
         {
