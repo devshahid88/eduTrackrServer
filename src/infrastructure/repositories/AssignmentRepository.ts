@@ -236,4 +236,19 @@ export class AssignmentRepository implements IAssignmentRepository {
       })
     );
   }
+
+  async deleteSubmission(assignmentId: string, studentId: string): Promise<void> {
+    const result = await AssignmentModel.findByIdAndUpdate(
+      assignmentId,
+      { 
+        $pull: { submissions: { studentId: new mongoose.Types.ObjectId(studentId) } },
+        $inc: { totalStudents: -1 }
+      },
+      { new: true }
+    );
+
+    if (!result) {
+      throw new Error('Assignment not found or submission not deleted');
+    }
+  }
 }

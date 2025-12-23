@@ -147,4 +147,26 @@ export class ScheduleController {
       next(error);
     }
   }
+
+  async stopLiveClass(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      if (!isValidObjectId(id)) {
+        return next(createHttpError("Invalid schedule ID", HttpStatus.BAD_REQUEST));
+      }
+
+      const updated = await this.scheduleUseCase.stopLiveClass(id);
+      if (!updated) {
+        return next(createHttpError("Schedule not found", HttpStatus.NOT_FOUND));
+      }
+
+      res.status(HttpStatus.OK).json({
+        success: true,
+        message: "Live class stopped",
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

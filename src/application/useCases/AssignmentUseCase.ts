@@ -200,7 +200,7 @@ export class AssignmentUseCase {
     return this.assignmentRepository.getSubmissions(assignmentId);
   }
 
-  async gradeMultipleSubmissions(assignmentId: string, grades: Array<{ studentId: string; grade: number }>): Promise<AssignmentSubmission[]> {
+  async gradeMultipleSubmissions(assignmentId: string, grades: Array<{ studentId: string; grade: number; feedback?: string }>): Promise<AssignmentSubmission[]> {
     const assignment = await this.assignmentRepository.findById(assignmentId);
     if (!assignment) {
       createHttpError(HttpMessage.ASSIGNMENT_NOT_FOUND, HttpStatus.NOT_FOUND);
@@ -229,7 +229,8 @@ export class AssignmentUseCase {
 
       const updatedSubmission = await this.assignmentRepository.updateSubmissionGrade(
         submissionToUpdate.id!.toString(),
-        gradeEntry.grade
+        gradeEntry.grade,
+        gradeEntry.feedback
       );
       updatedSubmissions.push(updatedSubmission);
       
@@ -239,7 +240,7 @@ export class AssignmentUseCase {
             userModel: 'Student',
             type: 'grade',
             title: `Grade Updated: ${assignment.title}`,
-            message: `You have received a new grade: ${gradeEntry.grade}/${assignment.maxMarks}.`,
+            message: `You have received a new grade: ${gradeEntry.grade}/${assignment.maxMarks}. ${gradeEntry.feedback ? 'Feedback: ' + gradeEntry.feedback : ''}`,
             read: false,
             sender: 'System',
             senderModel: 'Teacher',
@@ -251,5 +252,30 @@ export class AssignmentUseCase {
     }
 
     return updatedSubmissions;
+  }
+
+  async deleteSubmission(assignmentId: string, studentId: string): Promise<void> {
+    const assignment = await this.assignmentRepository.findById(assignmentId);
+    if (!assignment) {
+      createHttpError(HttpMessage.ASSIGNMENT_NOT_FOUND, HttpStatus.NOT_FOUND);
+      throw new Error('Assignment not found');
+    }
+
+    const submission = assignment.submissions.find(
+      sub => sub.studentId.toString() === studentId.toString()
+    );
+
+    if (!submission) {
+      createHttpError(HttpMessage.SUBMISSION_NOT_FOUND_FOR_STUDENT, HttpStatus.NOT_FOUND);
+      throw new Error('Submission not found');
+    }
+
+    // Check if graded
+    if (submission.grade !== undefined && submission.grade !== null) {
+      createHttpError('Cannot delete a graded submission', HttpStatus.FORBIDDEN);
+      throw new Error('Cannot delete a graded submission');
+    }
+
+    await this.assignmentRepository.deleteSubmission(assignmentId, studentId);
   }
 }

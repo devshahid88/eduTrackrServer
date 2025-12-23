@@ -12,4 +12,5 @@ export interface IAssignmentRepository {
   addSubmission(submission: AssignmentSubmission): Promise<AssignmentSubmission>; // Fixed signature
   updateSubmissionGrade(submissionId: string, grade: number, feedback?: string): Promise<AssignmentSubmission>; // Fixed signature
   getSubmissions(assignmentId: string): Promise<AssignmentSubmission[]>; // Fixed return type
+  deleteSubmission(assignmentId: string, studentId: string): Promise<void>;
 }

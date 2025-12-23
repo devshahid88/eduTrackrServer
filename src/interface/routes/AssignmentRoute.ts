@@ -112,14 +112,14 @@ router.post(
     assignmentController.submitAssignment.bind(assignmentController)
 );
 
-// Grade submission (Teachers and Admins only)
+// Grade multiple submissions (Teachers and Admins only)
 router.post(
     '/:id/grade',
     authenticateToken,
     authorizeRoles(['teacher', 'admin']),
     validateObjectId,
     validateGrade,
-    assignmentController.gradeSubmission.bind(assignmentController)
+    assignmentController.gradeMultipleSubmissions.bind(assignmentController)
 );
 
 // Get all submissions for an assignment (Teachers and Admins only)
@@ -129,6 +129,15 @@ router.get(
     authorizeRoles(['teacher', 'admin']),
     validateObjectId,
     assignmentController.getSubmissions.bind(assignmentController)
+);
+
+// Delete submission (Students only)
+router.delete(
+    '/:id/submission/:studentId',
+    authenticateToken,
+    authorizeRoles(['student']),
+    validateObjectId,
+    assignmentController.deleteSubmission.bind(assignmentController)
 );
 
 export default router;

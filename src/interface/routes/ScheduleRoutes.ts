@@ -87,4 +87,12 @@ router.post('/:id/start',
     scheduleController.startLiveClass.bind(scheduleController)
 );
 
+// End live class - Only teachers and admins can end live classes
+router.post('/:id/stop', 
+    authenticateToken, 
+    authorizeRoles(['teacher', 'admin']), 
+    validateObjectId, 
+    scheduleController.stopLiveClass.bind(scheduleController)
+);
+
 export default router;

@@ -78,6 +78,10 @@ export class ScheduleUseCase {
         return await this.scheduleRepository.updateSchedule(scheduleId, { isLive: true });
     }
 
+    async stopLiveClass(scheduleId: string): Promise<Schedule | null> {
+        return await this.scheduleRepository.updateSchedule(scheduleId, { isLive: false });
+    }
+
     private isValidTimeFormat(time: string | undefined): boolean {
         if (!time) return false;
         const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;

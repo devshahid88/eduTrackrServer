@@ -306,16 +306,21 @@ export const validateSubmission = (req: Request, res: Response, next: NextFuncti
 };
 
 export const validateGrade = (req: Request, res: Response, next: NextFunction) => {
-  const { studentId, grade } = req.body;
+  const { grades } = req.body;
 
   const errors: string[] = [];
 
-  if (!studentId || !Types.ObjectId.isValid(studentId)) {
-    errors.push('Valid student ID is required');
-  }
-
-  if (typeof grade !== 'number' || grade < 0) {
-    errors.push('Grade must be a non-negative number');
+  if (!Array.isArray(grades) || grades.length === 0) {
+    errors.push('Grades must be a non-empty array');
+  } else {
+    grades.forEach((gradeEntry, index) => {
+      if (!gradeEntry.studentId || !Types.ObjectId.isValid(gradeEntry.studentId)) {
+        errors.push(`Valid student ID is required for entry at index ${index}`);
+      }
+      if (typeof gradeEntry.grade !== 'number' || gradeEntry.grade < 0) {
+        errors.push(`Grade must be a non-negative number for entry at index ${index}`);
+      }
+    });
   }
 
   if (errors.length > 0) {

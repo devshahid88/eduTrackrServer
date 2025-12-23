@@ -214,7 +214,13 @@ export class AssignmentController {
         throw new Error('Grades must be a non-empty array');
       }
 
-      for (const gradeEntry of grades) {
+      const gradesWithFeedback = grades.map(entry => ({
+        studentId: entry.studentId,
+        grade: Number(entry.grade),
+        feedback: entry.feedback || ''
+      }));
+
+      for (const gradeEntry of gradesWithFeedback) {
         if (!gradeEntry.studentId || typeof gradeEntry.grade !== 'number') {
           throw new Error('Each grade entry must have a studentId and a numeric grade');
         }
@@ -223,8 +229,21 @@ export class AssignmentController {
         }
       }
 
-      const result = await this.assignmentUseCase.gradeMultipleSubmissions(id, grades);
+      const result = await this.assignmentUseCase.gradeMultipleSubmissions(id, gradesWithFeedback);
       res.status(HttpStatus.OK).json({ success: true, message: 'Grades submitted successfully', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteSubmission(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id, studentId } = req.params;
+      await this.assignmentUseCase.deleteSubmission(id, studentId);
+      res.status(HttpStatus.OK).json({ 
+        success: true, 
+        message: 'Submission deleted successfully' 
+      });
     } catch (error) {
       next(error);
     }
