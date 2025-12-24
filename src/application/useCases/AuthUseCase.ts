@@ -187,7 +187,7 @@ export class AuthUseCase {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`Reset URL → http://localhost:5173/auth/reset-password/${token}`);
+    console.log(`Reset URL → ${(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')}/auth/reset-password/${token}`);
 
     return { success: true, token, message: HttpMessage.RESET_SENT };
   }

@@ -77,7 +77,7 @@ export class StudentController {
           <li>Department: ${department.name}</li>
           <li>Class: ${student.class}</li>
         </ul>
-        <p><a href="http://localhost:5173/auth/student-login">Login Here</a></p>
+        <p><a href="${(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')}/auth/student-login">Login Here</a></p>
       `;
 
       try {

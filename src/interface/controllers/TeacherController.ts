@@ -44,7 +44,7 @@ export class TeacherController {
           <li>Role: ${teacher.role}</li>
           <li>Department: ${teacher.department}</li>
         </ul>
-        <a href="http://localhost:5173/auth/teacher-login">Login to your Teacher Dashboard</a>
+        <a href="${(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')}/auth/teacher-login">Login to your Teacher Dashboard</a>
       `;
 
       try {

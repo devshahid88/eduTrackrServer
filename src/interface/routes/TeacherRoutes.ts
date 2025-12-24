@@ -23,6 +23,7 @@ router.post('/create',
   teacherController.createTeacherWithImage.bind(teacherController)
 );
 
+
 // Profile image update - Teachers can update their own, admins can update any
 router.put('/:id/profile-image', 
   authenticateToken, 

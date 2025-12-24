@@ -26,5 +26,7 @@ export const DEFAULT_PROFILE_IMAGE =
 export const ensureFullImageUrl = (imagePath?: string): string => {
   if (!imagePath || imagePath.trim() === '') return DEFAULT_PROFILE_IMAGE;
   if (imagePath.startsWith('http')) return imagePath;
-  return `${'http://localhost:3000'}/${imagePath.replace(/^\//, '')}`;
+
+  const backendUrl = process.env.BACKEND_URL || 'http://localhost:3003';
+  return `${backendUrl.replace(/\/$/, '')}/${imagePath.replace(/^\//, '')}`;
 };
