@@ -30,7 +30,7 @@ export class AnnouncementUseCase {
       if (announcement.targetRoles.includes('Teacher')) {
         const teachers = await this.teacherRepository.getAllTeachers();
         teachers.forEach(teacher => {
-           if (teacher._id) targetUsers.push({ id: teacher._id.toString(), model: 'Teacher' });
+           if (teacher.id) targetUsers.push({ id: teacher.id, model: 'Teacher' });
         });
       }
 
