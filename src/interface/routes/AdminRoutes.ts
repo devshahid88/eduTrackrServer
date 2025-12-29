@@ -9,6 +9,8 @@ import { EmailService } from "../../infrastructure/services/EmailService";
 import { upload } from "../middleware/multer";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 
+import { validateUser, validateUserUpdate, validateProfileImage } from "../middleware/validation";
+
 const router = Router();
 
 // Initialize repositories and use cases
@@ -24,6 +26,7 @@ router.post("/create",
   authenticateToken, 
   authorizeRoles(['admin']), 
   upload.single("profileImage"), 
+  validateUser,
   adminController.createAdminWithImage.bind(adminController)
 );
 

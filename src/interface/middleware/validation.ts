@@ -35,38 +35,57 @@ export const validateObjectId = (req: Request, res: Response, next: NextFunction
 export const validateUser = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
-        const { email, username, password, role } = req.body;
+        const { email, username, password } = req.body;
+        let { role } = req.body;
         const errors: string[] = [];
+        
         if (!email) errors.push('Email is required');
         if (!username) errors.push('Username is required');
         if (!password) errors.push('Password is required');
         if (!role) errors.push('Role is required');
+
+        // Normalize and validate role
+        if (role) {
+            const normalizedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+            if (!['Student', 'Teacher', 'Admin'].includes(normalizedRole)) {
+                errors.push('Invalid role specified');
+            } else {
+                // Update role in request body to ensure consistency downstream
+                req.body.role = normalizedRole;
+                role = normalizedRole; 
+            }
+        }
+
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            errors.push('Invalid email format12345');
+            errors.push('Invalid email format');
         }
         if (password && password.length < 6) {
             errors.push('Password must be at least 6 characters long');
         }
-        if (role && !['Student', 'Teacher', 'Admin'].includes(role)) {
-            errors.push('Invalid role specified');
-        }
        
-        const studentRepo = new StudentRepository();
-        const teacherRepo = new TeacherRepository();
-        const adminRepo = new AdminRepository();
-    
-        const existingStudent = await studentRepo.findStudentByEmail(email);
-        const existingTeacher = await teacherRepo.findTeacherByEmail(email);
-        const existingAdmin = await adminRepo.findAdminByEmail(email);
-        
-        if (existingStudent || existingTeacher || existingAdmin ) {
-            errors.push('Email already exists');
-        }
         if (errors.length > 0) {
             return res.status(400).json({
                 success: false,
                 message: errors[0], 
                 errors
+            });
+        }
+
+        const studentRepo = new StudentRepository();
+        const teacherRepo = new TeacherRepository();
+        const adminRepo = new AdminRepository();
+    
+        const [existingStudent, existingTeacher, existingAdmin] = await Promise.all([
+            studentRepo.findStudentByEmail(email),
+            teacherRepo.findTeacherByEmail(email),
+            adminRepo.findAdminByEmail(email)
+        ]);
+        
+        if (existingStudent || existingTeacher || existingAdmin ) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email already exists',
+                errors: ['Email already exists']
             });
         }
         next();

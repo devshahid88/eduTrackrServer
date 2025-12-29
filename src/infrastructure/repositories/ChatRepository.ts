@@ -242,16 +242,11 @@ export class ChatRepository implements IChatRepository {
         })
         .lean();
 
-      if (!chatList) {
-        console.log('No chat list found for user:', userId);
-        return null;
+      if (chatList && chatList.chats) {
+        chatList.chats.sort((a: any, b: any) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
       }
-
-      console.log('Found chat list:', {
-        id: chatList._id,
-        user: chatList.user,
-        chatsCount: chatList.chats.length
-      });
 
       return chatList;
     } catch (error) {

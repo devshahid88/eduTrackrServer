@@ -17,7 +17,8 @@ export class AiRepository {
     async generateResponse(prompt: string): Promise<string> {
         try {
             const response = await this.genAI.models.generateContent({
-                model: "gemini-2.0-flash",
+                model: "gemini-1.5-flash",
+                // model: "gemini-2.0-flash",
                 contents: prompt,
             });
 
