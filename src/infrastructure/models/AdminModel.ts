@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, ObjectId } from 'mongoose';
 
- interface IAdmin extends Document {
+export interface IAdminDocument extends Document {
   username: string;
   email: string;
   firstname: string;
@@ -8,8 +8,6 @@ import mongoose, { Schema, Document, ObjectId } from 'mongoose';
   password: string;
   profileImage: string;
   role: 'Admin';
-
-  
 }
 
 const adminSchema: Schema = new Schema({
@@ -23,7 +21,7 @@ const adminSchema: Schema = new Schema({
 
 });
 
-const admintModel = mongoose.model<IAdmin>('Admin', adminSchema);
+const admintModel = mongoose.model<IAdminDocument>('Admin', adminSchema);
 
 export default admintModel
 

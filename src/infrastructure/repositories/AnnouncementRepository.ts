@@ -1,4 +1,4 @@
-import { IAnnouncementRepository } from '../../domain/repositories/IAnnouncementRepository';
+import { IAnnouncementRepository } from '../../application/Interfaces/IAnnouncementRepository';
 import { IAnnouncement, AnnouncementModel } from '../models/AnnouncementModel';
 
 export class AnnouncementRepository implements IAnnouncementRepository {

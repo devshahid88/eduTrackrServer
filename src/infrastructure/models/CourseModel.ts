@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
-export interface ICourse extends Document {
+export interface ICourseDocument extends Document {
     name: string;
     code: string;
     departmentId: Types.ObjectId;
@@ -46,5 +46,5 @@ const CourseSchema: Schema = new Schema({
     }
 });
 
-export default mongoose.model<ICourse>('Course', CourseSchema);
+export default mongoose.model<ICourseDocument>('Course', CourseSchema);
 

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { IAnnouncementRepository } from '../../domain/repositories/IAnnouncementRepository';
+import { IAnnouncementRepository } from '../Interfaces/IAnnouncementRepository';
 import { IAnnouncement } from '../../infrastructure/models/AnnouncementModel';
 import { NotificationUseCase } from './NotificationUseCase';
 import { IStudentRepository } from '../../application/Interfaces/IStudent';

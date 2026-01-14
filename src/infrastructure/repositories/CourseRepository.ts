@@ -1,62 +1,62 @@
 import { ICourseRepository } from "../../application/Interfaces/ICourseRepository";
 import { Course } from "../../domain/entities/Course";
-import CourseModel from "../models/CourseModel";
+import CourseModel, { ICourseDocument } from "../models/CourseModel";
+import { BaseRepository } from "./BaseRepository";
+import { CourseMapper } from "../mappers/CourseMapper";
 
-function mapToCourseEntity(data: any): Course {
-  return Course.create({
-    ...data,
-    _id: data._id.toString(),
-    departmentId: data.departmentId?._id?.toString() || data.departmentId?.toString(),
-    departmentName: data.departmentId?.name || undefined,
-  });
-}
+export class CourseRepository extends BaseRepository<Course, ICourseDocument> implements ICourseRepository {
+  
+  constructor() {
+    super(CourseModel);
+  }
 
-export class CourseRepository implements ICourseRepository {
+  protected toEntity(model: ICourseDocument): Course {
+    return CourseMapper.toDomain(model);
+  }
+
   async createCourse(course: Course): Promise<Course> {
-    const newCourse = await CourseModel.create(course);
-    return mapToCourseEntity(newCourse.toObject());
+    return this.create(course);
   }
 
   async findCourseById(id: string): Promise<Course | null> {
-    const course = await CourseModel.findById(id).populate('departmentId', 'name');
-    return course ? mapToCourseEntity(course.toObject()) : null;
+    const course = await this._model.findById(id).populate('departmentId', 'name');
+    return course ? this.toEntity(course) : null;
   }
 
   async findCourseByCode(code: string): Promise<Course | null> {
-    const course = await CourseModel.findOne({ 
+    const course = await this._model.findOne({ 
       code: { $regex: new RegExp(`^${code}$`, 'i') } 
     }).populate('departmentId', 'name');
-    return course ? mapToCourseEntity(course.toObject()) : null;
+    return course ? this.toEntity(course) : null;
   }
 
   async findCoursesByDepartment(departmentId: string): Promise<Course[]> {
-    const courses = await CourseModel.find({ departmentId }).populate('departmentId', 'name');
-    return courses.map(course => mapToCourseEntity(course.toObject()));
+    const courses = await this._model.find({ departmentId }).populate('departmentId', 'name');
+    return courses.map(course => this.toEntity(course));
   }
 
   async findCourseByName(name: string): Promise<Course | null> {
-    const course = await CourseModel.findOne({ 
+    const course = await this._model.findOne({ 
       name: { $regex: new RegExp(`^${name}$`, 'i') } 
     }).populate('departmentId', 'name');
-    return course ? mapToCourseEntity(course.toObject()) : null;
+    return course ? this.toEntity(course) : null;
   }
 
   async updateCourse(id: string, course: Partial<Course>): Promise<Course | null> {
-    const updatedCourse = await CourseModel.findByIdAndUpdate(
+    const updatedCourse = await this._model.findByIdAndUpdate(
       id,
       { ...course, updatedAt: new Date() },
       { new: true }
     ).populate('departmentId', 'name');
-    return updatedCourse ? mapToCourseEntity(updatedCourse.toObject()) : null;
+    return updatedCourse ? this.toEntity(updatedCourse) : null;
   }
 
   async deleteCourse(id: string): Promise<boolean> {
-    const result = await CourseModel.findByIdAndDelete(id);
-    return !!result;
+    return this.delete(id);
   }
 
   async getAllCourses(): Promise<Course[]> {
-    const courses = await CourseModel.find().populate('departmentId', 'name');
-    return courses.map(course => mapToCourseEntity(course.toObject()));
+    const courses = await this._model.find().populate('departmentId', 'name');
+    return courses.map(course => this.toEntity(course));
   }
 }

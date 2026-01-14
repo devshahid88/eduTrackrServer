@@ -1,65 +1,57 @@
 import { IAdminRepository } from "../../application/Interfaces/IAdmin";
 import Admin from "../../domain/entities/Admin";
-import adminModel from "../models/AdminModel";
+import adminModel, { IAdminDocument } from "../models/AdminModel";
+import { BaseRepository } from "./BaseRepository";
+import { AdminMapper } from "../mappers/AdminMapper";
 
-export class AdminRepository implements IAdminRepository {
-    private toEntity(adminObj: any): Admin {
-        return new Admin({
-            id: adminObj._id?.toString(),
-            username: adminObj.username,
-            email: adminObj.email,
-            firstname: adminObj.firstname,
-            lastname: adminObj.lastname,
-            password: adminObj.password,
-            profileImage: adminObj.profileImage,
-            role: adminObj.role || 'Admin',
-        });
+export class AdminRepository extends BaseRepository<Admin, IAdminDocument> implements IAdminRepository {
+    
+    constructor() {
+        super(adminModel);
+    }
+
+    protected toEntity(adminObj: IAdminDocument): Admin {
+        return AdminMapper.toDomain(adminObj);
     }
 
     async createAdmin(admin: Admin): Promise<Admin> {
-        const newAdmin = new adminModel(admin);
-        const savedAdmin = await newAdmin.save();
-        return this.toEntity(savedAdmin.toObject());
+        return this.create(admin);
     }
 
     async findAdminById(id: string): Promise<Admin | null> {
-        const admin = await adminModel.findById(id).lean();
-        return admin ? this.toEntity(admin) : null;
+        return this.findById(id);
     }
 
     async findAdminByEmail(email: string): Promise<Admin | null> {
-        const admin = await adminModel.findOne({ email }).lean();
+        const admin = await this._model.findOne({ email });
         return admin ? this.toEntity(admin) : null;
     }
 
     async updateAdmin(id: string, adminData: Partial<Admin>): Promise<Admin | null> {
-        const updatedAdmin = await adminModel.findByIdAndUpdate(id, adminData, { new: true }).lean();
-        return updatedAdmin ? this.toEntity(updatedAdmin) : null;
+        return this.update(id, adminData);
     }
 
     async deleteAdmin(id: string): Promise<boolean> {
-        const result = await adminModel.findByIdAndDelete(id);
-        return !!result;
+        return this.delete(id);
     }
 
     async getAllAdmins(): Promise<Admin[]> {
-        const admins = await adminModel.find().lean();
-        return admins.map(admin => this.toEntity(admin));
+        return this.findAll();
     }
 
     async searchUsers(searchTerm: string, role: string = 'Admin'): Promise<Admin[]> {
-    const query: any = {
-      $or: [
-        { username: { $regex: searchTerm, $options: 'i' } },
-        { email: { $regex: searchTerm, $options: 'i' } },
-      ],
-    };
+        const query: any = {
+            $or: [
+                { username: { $regex: searchTerm, $options: 'i' } },
+                { email: { $regex: searchTerm, $options: 'i' } },
+            ],
+        };
 
-    if (role !== 'All') {
-      query.role = role;
+        if (role !== 'All') {
+            query.role = role;
+        }
+
+        const admins = await this._model.find(query);
+        return admins.map((admin) => this.toEntity(admin));
     }
-
-    const admins = await adminModel.find(query).lean();
-    return admins.map((admin) => this.toEntity(admin));
-  }
 }

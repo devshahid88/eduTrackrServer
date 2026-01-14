@@ -1,4 +1,4 @@
-import { IResourceRepository } from '../../domain/repositories/IResourceRepository';
+import { IResourceRepository } from '../../application/Interfaces/IResourceRepository';
 import { IResource, ResourceModel } from '../models/ResourceModel';
 
 export class ResourceRepository implements IResourceRepository {

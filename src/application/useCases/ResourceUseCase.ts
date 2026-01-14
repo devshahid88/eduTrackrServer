@@ -1,4 +1,4 @@
-import { IResourceRepository } from '../../domain/repositories/IResourceRepository';
+import { IResourceRepository } from '../Interfaces/IResourceRepository';
 import { IResource } from '../../infrastructure/models/ResourceModel';
 
 export class ResourceUseCase {

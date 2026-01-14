@@ -31,8 +31,8 @@ import { AnnouncementController } from './interface/controllers/AnnouncementCont
 import { AssignmentRepository } from './infrastructure/repositories/AssignmentRepository';
 import { AssignmentUseCase } from './application/useCases/AssignmentUseCase';
 import { AssignmentController } from './interface/controllers/AssignmentController';
+import { AgoraController } from './interface/controllers/AgoraController';
 import mongoose from 'mongoose';
-const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 
 dotenv.config();
 connectDB();
@@ -86,30 +86,10 @@ app.use('/api/concerns', ConcernRoutes);
 app.use('/api/resources', ResourceRoutes);
 app.use('/api/announcements', AnnouncementRoutes);
 
-const APP_ID = process.env.YOUR_AGORA_APP_ID;
-const APP_CERTIFICATE =process.env.YOUR_AGORA_APP_CERTIFICATE;
-
-app.post('/api/agora/token', (req, res) => {
-  const { channelName, userId } = req.body;
-  const role = RtcRole.PUBLISHER;
-  const expirationTimeInSeconds = 3600;
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-  const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
-
-  try {
-    const token = RtcTokenBuilder.buildTokenWithUid(
-      APP_ID,
-      APP_CERTIFICATE,
-      channelName,
-      userId,
-      role,
-      privilegeExpiredTs
-    );
-    res.json({ token });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate token' });
-  }
-});
+import { LoggerService } from './infrastructure/services/LoggerService';
+const logger = new LoggerService();
+const agoraController = new AgoraController(logger);
+app.post('/api/agora/token', (req, res) => agoraController.generateToken(req, res));
 
 
 // Error handler
