@@ -27,8 +27,13 @@ const submissionStorage = new CloudinaryStorage({
 export const assignmentUpload = multer({ storage: assignmentStorage });
 export const submissionUpload = multer({ storage: submissionStorage });
 
+import { ILogger } from '../../application/Interfaces/ILogger';
+
 export class AssignmentController {
-  constructor(private assignmentUseCase: AssignmentUseCase) {}
+  constructor(
+    private assignmentUseCase: AssignmentUseCase,
+    private logger: ILogger
+  ) {}
 
   async createAssignment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -106,10 +111,10 @@ export class AssignmentController {
   }
 
   async getAssignmentsByTeacher(req: Request, res: Response, next: NextFunction): Promise<void> {
-    console.log('Controller - Get Assignments by Teacher ID:', req.params.teacherId);
+    this.logger.info(`Controller - Get Assignments by Teacher ID: ${req.params.teacherId}`);
     try {
       const assignments = await this.assignmentUseCase.getAssignmentsByTeacher(req.params.teacherId);
-      console.log('Controller - Assignments:', assignments);
+      this.logger.info(`Controller - Assignments: ${JSON.stringify(assignments)}`);
       res.status(HttpStatus.OK).json({ success: true, data: assignments });
     } catch (error) {
       next(error);
@@ -117,14 +122,18 @@ export class AssignmentController {
   }
 
   async getAssignmentById(req: Request, res: Response, next: NextFunction): Promise<void> {
+    this.logger.info(`AssignmentController: getAssignmentById called for id: ${req.params.id}`);
     try {
       const assignment = await this.assignmentUseCase.getAssignmentById(req.params.id);
       if (!assignment) {
+        this.logger.info(`AssignmentController: Assignment not found for id: ${req.params.id}`);
         res.status(HttpStatus.NOT_FOUND).json({ success: false, message: 'Assignment not found' });
         return;
       }
+      this.logger.info(`AssignmentController: Assignment found.`);
       res.status(HttpStatus.OK).json({ success: true, data: assignment });
     } catch (error) {
+      this.logger.error('AssignmentController: Error in getAssignmentById:', error);
       next(error);
     }
   }
@@ -182,7 +191,7 @@ export class AssignmentController {
   }
 
   async gradeSubmission(req: Request, res: Response, next: NextFunction): Promise<void> {
-    console.log('Controller - Grade Submission for Submission ID:', req.params.submissionId);
+    this.logger.info(`Controller - Grade Submission for Submission ID: ${req.params.submissionId}`);
     try {
       const { submissionId } = req.params;
       const { grade, feedback } = req.body;
@@ -195,12 +204,13 @@ export class AssignmentController {
   }
 
   async getSubmissions(req: Request, res: Response, next: NextFunction): Promise<void> {
-    console.log('Controller - Get Submissions for Assignment ID:', req.params.id);
+    this.logger.info(`Controller - Get Submissions for Assignment ID: ${req.params.id}`);
     try {
       const submissions = await this.assignmentUseCase.getSubmissions(req.params.id);
-      console.log('Controller - Submissions:', submissions);
+      this.logger.info(`Controller - Submissions found: ${submissions.length}`);
       res.status(HttpStatus.OK).json({ success: true, data: submissions });
     } catch (error) {
+      this.logger.error('Controller - Error in getSubmissions:', error);
       next(error);
     }
   }

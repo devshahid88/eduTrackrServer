@@ -4,8 +4,13 @@ import { HttpStatus } from '../../common/enums/http-status.enum';
 import { HttpMessage } from '../../common/enums/http-message.enum';
 import { createHttpError } from '../../common/utils/createHttpError';
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class AuthController {
-  constructor(private authUseCase: AuthUseCase) {}
+  constructor(
+    private authUseCase: AuthUseCase,
+    private logger: ILogger
+  ) {}
 
   async loginStudent(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -66,7 +71,7 @@ export class AuthController {
   }
 
   async loginTeacher(req: Request, res: Response, next: NextFunction): Promise<void> {
-    console.log('it is techer ')
+    this.logger.info('Teacher login attempt');
     try {
       const { email, password } = req.body;
       if (!email || !password) {
@@ -133,7 +138,7 @@ export class AuthController {
   }
 
   async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-    console.log("Refreshing access token...");
+    this.logger.info("Refreshing access token...");
     try {
       const refreshToken = req.cookies.refreshToken;
 

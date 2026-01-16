@@ -3,11 +3,16 @@ import { ChatUseCase } from '../../application/useCases/ChatUseCase';
 import mongoose from 'mongoose';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 
+import { ILogger } from '../../application/Interfaces/ILogger';
+
 export class ChatController {
-  constructor(private chatUseCase: ChatUseCase) {}
+  constructor(
+    private chatUseCase: ChatUseCase,
+    private logger: ILogger
+  ) {}
 
   async initiateChat(req: Request, res: Response, next: NextFunction): Promise<void> {
-    console.log('ChatController - initiateChat:', req.body);
+    this.logger.info(`ChatController - initiateChat: ${JSON.stringify(req.body)}`);
     try {
       const { teacherId, studentId, initiatorId, receiverId, initiatorType } = req.body;
       let finalTeacherId: string;
@@ -65,8 +70,10 @@ export class ChatController {
         return;
       }
 
+      const mediaType = req.file?.mimetype.startsWith('image/') ? 'image' : 'document';
+
       const messageData = await this.chatUseCase.saveMessage(
-        chatId, sender, senderModel, receiver, receiverModel, message, mediaUrl, replyTo
+        chatId, sender, senderModel, receiver, receiverModel, message, mediaUrl, mediaType, replyTo
       );
 
       res.status(HttpStatus.CREATED).json({ message: 'Message sent successfully', data: messageData, success: true });

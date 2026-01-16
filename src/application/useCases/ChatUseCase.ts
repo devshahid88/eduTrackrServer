@@ -9,11 +9,14 @@ import { ChatMessage } from '../../common/enums/http-message.enum';
 import { createHttpError } from '../../common/utils/createHttpError';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 
+import { ILogger } from '../../application/Interfaces/ILogger';
+
 export class ChatUseCase {
   constructor(
     private chatRepository: IChatRepository,
     private notificationRepository: INotificationRepository,
-    private io: Server
+    private io: Server,
+    private logger: ILogger
   ) {}
 
   async initiateChat(teacherId: string, studentId: string): Promise<string> {
@@ -40,7 +43,7 @@ export class ChatUseCase {
 
       return chatId;
     } catch (error) {
-      console.error(ChatMessage.CHAT_INITIATION_FAILED, error);
+      this.logger.error(ChatMessage.CHAT_INITIATION_FAILED, error);
       createHttpError(ChatMessage.CHAT_INITIATION_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -98,11 +101,12 @@ export class ChatUseCase {
       await this.chatRepository.incrementUnreadCount(receiver, chatId);
 
       await this.notificationRepository.createNotification({
-        userId: new mongoose.Types.ObjectId(receiver),
+        userId: receiver,
         userModel: receiverModel,
         type: mediaUrl ? 'media' : 'message',
         title: `New message from ${senderModel}`,
         message: message || (mediaUrl ? 'Media message' : 'New message'),
+        read: false,
         sender,
         senderModel,
         role: receiverModel,
@@ -120,7 +124,7 @@ export class ChatUseCase {
 
       return savedMessage;
     } catch (error) {
-      console.error(ChatMessage.MESSAGE_SAVE_FAILED, error);
+      this.logger.error(ChatMessage.MESSAGE_SAVE_FAILED, error);
       createHttpError(ChatMessage.MESSAGE_SAVE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -135,7 +139,7 @@ export class ChatUseCase {
       await this.chatRepository.resetUnreadCount(userId, chatId);
       return messages;
     } catch (error) {
-      console.error(ChatMessage.MESSAGE_FETCH_FAILED, error);
+      this.logger.error(ChatMessage.MESSAGE_FETCH_FAILED, error);
       createHttpError(ChatMessage.MESSAGE_FETCH_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -148,7 +152,7 @@ export class ChatUseCase {
     try {
       return await this.chatRepository.getChatList(userId);
     } catch (error) {
-      console.error(ChatMessage.CHAT_LIST_FETCH_FAILED, error);
+      this.logger.error(ChatMessage.CHAT_LIST_FETCH_FAILED, error);
       createHttpError(ChatMessage.CHAT_LIST_FETCH_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -157,21 +161,17 @@ export class ChatUseCase {
     try {
       const updatedMessage = await this.chatRepository.addReaction(messageId, userId, reaction);
 
-      this.io.to(updatedMessage.sender.toString()).emit('messageReaction', {
+      // Emit to the chat room so everyone in the chat gets the reaction
+      this.io.to(updatedMessage.chatId).emit('reactionAdded', {
         messageId: updatedMessage.id,
         reaction,
-        userId
-      });
-
-      this.io.to(updatedMessage.receiver.toString()).emit('messageReaction', {
-        messageId: updatedMessage.id,
-        reaction,
-        userId
+        userId,
+        chatId: updatedMessage.chatId
       });
 
       return updatedMessage;
     } catch (error) {
-      console.error(ChatMessage.REACTION_FAILED, error);
+      this.logger.error(ChatMessage.REACTION_FAILED, error);
       createHttpError(ChatMessage.REACTION_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -180,23 +180,21 @@ export class ChatUseCase {
     try {
       const deletedMessage = await this.chatRepository.deleteMessage(messageId, userId);
 
-      this.io.to(deletedMessage.sender.toString()).emit('messageDeleted', {
-        messageId: deletedMessage.id
-      });
-
-      this.io.to(deletedMessage.receiver.toString()).emit('messageDeleted', {
-        messageId: deletedMessage.id
+      // Emit to the chat room so everyone in the chat gets the update
+      this.io.to(deletedMessage.chatId).emit('messageDeleted', {
+        messageId: deletedMessage.id,
+        chatId: deletedMessage.chatId
       });
 
       return deletedMessage;
     } catch (error) {
-      console.error(ChatMessage.MESSAGE_DELETE_FAILED, error);
+      this.logger.error(ChatMessage.MESSAGE_DELETE_FAILED, error);
       createHttpError(ChatMessage.MESSAGE_DELETE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   handleUserConnection(socket: Socket, userId: string, userModel: 'Teacher' | 'Student'): void {
-    console.log(`${ChatMessage.USER_CONNECTED}: ${userId} (${userModel})`);
+    this.logger.info(`${ChatMessage.USER_CONNECTED}: ${userId} (${userModel})`);
     socket.join(userId);
 
     this.chatRepository.getChatList(userId).then(chatList => {
@@ -206,12 +204,12 @@ export class ChatUseCase {
         });
       }
     }).catch(error => {
-      console.error('Error joining existing chats:', error);
+      this.logger.error('Error joining existing chats:', error);
     });
   }
 
   handleUserDisconnection(userId: string, userModel: 'Teacher' | 'Student'): void {
-    console.log(`${ChatMessage.USER_DISCONNECTED}: ${userId} (${userModel})`);
+    this.logger.info(`${ChatMessage.USER_DISCONNECTED}: ${userId} (${userModel})`);
   }
 
   handleTyping(socket: Socket, chatId: string, userId: string, isTyping: boolean): void {

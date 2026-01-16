@@ -9,11 +9,16 @@ import { ConcernStatus } from '../../domain/entities/Concern'; // Import from Co
 // Add .d.ts extension// 
 type UserRoleType = 'Student' | 'Teacher' | 'Admin';
 
+import { ILogger } from '../../application/Interfaces/ILogger';
+
 export class ConcernController {
-  constructor(private concernUseCase: ConcernUseCase) {}
+  constructor(
+    private concernUseCase: ConcernUseCase,
+    private logger: ILogger
+  ) {}
 
   async raiseConcern(req: Request, res: Response, next: NextFunction) {
-    console.log('Controller - Raise Concern:', req.body);
+    this.logger.info(`Controller - Raise Concern: ${JSON.stringify(req.body)}`);
     try {
       // Check if user exists (should always exist due to middleware)
       if (!req.user) {

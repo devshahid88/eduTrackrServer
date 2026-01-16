@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IDepartment extends Document {
+export interface IDepartmentDocument extends Document {
     name: string;
     code: string;
     establishedDate: Date;
@@ -54,5 +54,5 @@ const DepartmentSchema: Schema = new Schema({
     }
 });
 
-export default mongoose.model<IDepartment>('Department', DepartmentSchema);
+export default mongoose.model<IDepartmentDocument>('Department', DepartmentSchema);
 

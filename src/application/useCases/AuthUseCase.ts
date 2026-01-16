@@ -8,10 +8,15 @@ import { HttpStatus } from '../../common/enums/http-status.enum';
 import { createHttpError } from '../../common/utils/createHttpError';
 import { HttpMessage } from '../../common/enums/http-message.enum';
 
+import { ILogger } from "../Interfaces/ILogger";
+
 dotenv.config();
 
 export class AuthUseCase {
-  constructor(private authRepository: IAuthRepository) {}
+  constructor(
+    private authRepository: IAuthRepository,
+    private logger: ILogger
+  ) {}
 
   async loginStudent(email: string, password: string) {
     if (!email) {
@@ -187,7 +192,7 @@ export class AuthUseCase {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`Reset URL → ${(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')}/auth/reset-password/${token}`);
+    this.logger.info(`Reset URL → ${(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')}/auth/reset-password/${token}`);
 
     return { success: true, token, message: HttpMessage.RESET_SENT };
   }

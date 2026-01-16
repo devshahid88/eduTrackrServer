@@ -5,11 +5,13 @@ import { ConcernUseCase } from '../../application/useCases/ConcernUseCase';
 import { ConcernRepository } from '../../infrastructure/repositories/ConcernRepository';
 import { authenticateToken, authorizeRoles } from '../middleware/auth';
 
+import logger from '../../infrastructure/config/logger';
+
 const router = Router();
 
-const concernRepository = new ConcernRepository();
-const concernUseCase = new ConcernUseCase(concernRepository);
-const concernController = new ConcernController(concernUseCase);
+const concernRepository = new ConcernRepository(logger);
+const concernUseCase = new ConcernUseCase(concernRepository, logger);
+const concernController = new ConcernController(concernUseCase, logger);
 
 // Raise concern - Students, teachers, and admins can raise concerns
 router.post('/', 

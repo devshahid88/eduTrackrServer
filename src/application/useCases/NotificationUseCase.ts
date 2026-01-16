@@ -1,36 +1,41 @@
 import { INotificationRepository } from '../Interfaces/INotificationRepository';
-import { INotification } from '../../infrastructure/models/notification.models';
+import { Notification } from '../../domain/entities/Notification';
 import { createHttpError } from '../../common/utils/createHttpError';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 import { NotificationMessage } from '../../common/enums/http-message.enum';
 
-export class NotificationUseCase {
-  constructor(private notificationRepository: INotificationRepository) {}
+import { ILogger } from '../Interfaces/ILogger';
 
-  async createNotification(notification: Partial<INotification>): Promise<INotification> {
+export class NotificationUseCase {
+  constructor(
+    private notificationRepository: INotificationRepository,
+    private logger: ILogger
+  ) {}
+
+  async createNotification(notification: Partial<Notification>): Promise<Notification> {
     try {
       return await this.notificationRepository.createNotification(notification);
     } catch (error) {
-      console.error('Error in createNotification:', error);
-      createHttpError(NotificationMessage.CREATE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error in createNotification:', error);
+      throw createHttpError(NotificationMessage.CREATE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async getNotifications(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<INotification[]> {
+  async getNotifications(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<Notification[]> {
     try {
       return await this.notificationRepository.getNotifications(userId, userModel);
     } catch (error) {
-      console.error('Error in getNotifications:', error);
-      createHttpError(NotificationMessage.FETCH_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error in getNotifications:', error);
+      throw createHttpError(NotificationMessage.FETCH_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async markAsRead(notificationId: string): Promise<INotification> {
+  async markAsRead(notificationId: string): Promise<Notification> {
     try {
       return await this.notificationRepository.markAsRead(notificationId);
     } catch (error) {
-      console.error('Error in markAsRead:', error);
-      createHttpError(NotificationMessage.MARK_READ_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error in markAsRead:', error);
+      throw createHttpError(NotificationMessage.MARK_READ_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -38,8 +43,8 @@ export class NotificationUseCase {
     try {
       await this.notificationRepository.markAllAsRead(userId, userModel);
     } catch (error) {
-      console.error('Error in markAllAsRead:', error);
-      createHttpError(NotificationMessage.MARK_ALL_READ_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error in markAllAsRead:', error);
+      throw createHttpError(NotificationMessage.MARK_ALL_READ_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -47,8 +52,8 @@ export class NotificationUseCase {
     try {
       await this.notificationRepository.deleteNotification(notificationId);
     } catch (error) {
-      console.error('Error in deleteNotification:', error);
-      createHttpError(NotificationMessage.DELETE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error in deleteNotification:', error);
+      throw createHttpError(NotificationMessage.DELETE_FAILED, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

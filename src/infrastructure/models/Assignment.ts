@@ -17,7 +17,7 @@ interface ISubmission {
   feedback?: string;
 }
 
-interface IAssignmentDocument extends Document {
+export interface IAssignmentDocument extends Document {
   title: string;
   description: string;
   instructions?: string;

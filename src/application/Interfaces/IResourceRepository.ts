@@ -1,10 +1,8 @@
-import { IResource } from '../../infrastructure/models/ResourceModel';
+import { Resource } from '../../domain/entities/Resource';
+import { IBaseRepository } from './IBaseRepository';
 
-export interface IResourceRepository {
-  create(resource: Partial<IResource>): Promise<IResource>;
-  findAll(filter?: any): Promise<IResource[]>;
-  findById(id: string): Promise<IResource | null>;
-  update(id: string, resource: Partial<IResource>): Promise<IResource | null>;
-  delete(id: string): Promise<boolean>;
-  findByCourseId(courseId: string): Promise<IResource[]>;
+export interface IResourceRepository extends IBaseRepository<Resource> {
+  findAll(filter?: any): Promise<Resource[]>;
+  findByCourseId(courseId: string): Promise<Resource[]>;
 }
+

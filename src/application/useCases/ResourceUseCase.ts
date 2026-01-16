@@ -1,19 +1,23 @@
 import { IResourceRepository } from '../Interfaces/IResourceRepository';
-import { IResource } from '../../infrastructure/models/ResourceModel';
+import { Resource } from '../../domain/entities/Resource';
+
+import { ILogger } from '../Interfaces/ILogger';
 
 export class ResourceUseCase {
-  constructor(private resourceRepository: IResourceRepository) {}
+  constructor(
+    private resourceRepository: IResourceRepository,
+    private logger: ILogger
+  ) {}
 
-  async createResource(resource: Partial<IResource>): Promise<IResource> {
+  async createResource(resourceData: Partial<Resource>): Promise<Resource> {
+    const resource = Resource.create(resourceData);
     return await this.resourceRepository.create(resource);
   }
 
-  async getAllResources(role?: string): Promise<IResource[]> {
+  async getAllResources(role?: string): Promise<Resource[]> {
     try {
       let filter = {};
       if (role && role !== 'Admin') {
-        // Teachers see Teacher and Student resources
-        // Students see only Student resources
         if (role === 'Teacher') {
           filter = { role: { $in: ['Teacher', 'Student'] } };
         } else if (role === 'Student') {
@@ -22,16 +26,16 @@ export class ResourceUseCase {
       }
       return await this.resourceRepository.findAll(filter);
     } catch (error) {
-      console.error('Error in getAllResources UseCase:', error);
+      this.logger.error('Error in getAllResources UseCase:', error);
       throw error;
     }
   }
 
-  async getResourceById(id: string): Promise<IResource | null> {
+  async getResourceById(id: string): Promise<Resource | null> {
     return await this.resourceRepository.findById(id);
   }
 
-  async updateResource(id: string, resource: Partial<IResource>): Promise<IResource | null> {
+  async updateResource(id: string, resource: Partial<Resource>): Promise<Resource | null> {
     return await this.resourceRepository.update(id, resource);
   }
 
@@ -39,7 +43,7 @@ export class ResourceUseCase {
     return await this.resourceRepository.delete(id);
   }
   
-  async getResourcesByCourse(courseId: string): Promise<IResource[]> {
+  async getResourcesByCourse(courseId: string): Promise<Resource[]> {
       return await this.resourceRepository.findByCourseId(courseId);
   }
 }

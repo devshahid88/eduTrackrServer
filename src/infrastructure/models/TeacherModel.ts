@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-interface ITeacher extends Document {
+export interface ITeacherDocument extends Document {
   username: string;
   email: string;
   firstname: string;
@@ -21,6 +21,6 @@ const TeacherSchema: Schema = new Schema({
   department: { type: Schema.Types.ObjectId, ref: 'Department', required: true },
   role: { type: String, enum: ['Teacher'], default: 'Teacher' }
 });
-const teacherModel = mongoose.model<ITeacher>('Teacher', TeacherSchema);
+const teacherModel = mongoose.model<ITeacherDocument>('Teacher', TeacherSchema);
 
 export default teacherModel;

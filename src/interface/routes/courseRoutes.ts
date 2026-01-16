@@ -6,11 +6,13 @@ import { CourseRepository } from "../../infrastructure/repositories/CourseReposi
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import { isValidObjectId } from "mongoose";
 
+import logger from "../../infrastructure/config/logger";
+
 const router = Router();
 
-const courseRepository = new CourseRepository();
-const courseUseCase = new CourseUseCase(courseRepository);
-const courseController = new CourseController(courseUseCase);
+const courseRepository = new CourseRepository(logger);
+const courseUseCase = new CourseUseCase(courseRepository, logger);
+const courseController = new CourseController(courseUseCase, logger);
 
 const validateObjectId = (req: any, res: any, next: any) => {
     const id = req.params.id || req.params.departmentId;

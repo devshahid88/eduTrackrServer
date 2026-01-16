@@ -1,71 +1,70 @@
 import { ScheduleModel, IScheduleDocument } from '../models/ScheduleModel';
 import { IScheduleRepository } from '../../application/Interfaces/IScheduleRepository';
 import Schedule from '../../domain/entities/Schedule';
+import { BaseRepository } from "./BaseRepository";
+import { ScheduleMapper } from "../mappers/ScheduleMapper";
 
-export class ScheduleRepository implements IScheduleRepository {
+import { ILogger } from '../../application/Interfaces/ILogger';
+
+export class ScheduleRepository extends BaseRepository<Schedule, IScheduleDocument> implements IScheduleRepository {
+    
+    constructor(private logger: ILogger) {
+        super(ScheduleModel);
+    }
+
+    protected toEntity(model: IScheduleDocument): Schedule {
+        return ScheduleMapper.toDomain(model);
+    }
+
     async createSchedule(schedule: Schedule): Promise<Schedule> {
-        const scheduleDoc = new ScheduleModel(schedule);
-        const savedDoc = await scheduleDoc.save();
-        return new Schedule({
-            ...savedDoc.toObject(),
-            _id: savedDoc._id
-        });
+        return this.create(schedule);
     }
 
     async findScheduleById(id: string): Promise<Schedule | null> {
-        const doc = await ScheduleModel.findById(id)
+        const doc = await this._model.findById(id)
             .populate('departmentId')
             .populate('courseId')
             .populate('teacherId');
-        return doc ? new Schedule({ ...doc.toObject(), _id: doc._id }) : null;
+        return doc ? this.toEntity(doc) : null;
     }
 
     async updateSchedule(id: string, scheduleData: Partial<Schedule>): Promise<Schedule | null> {
-        const doc = await ScheduleModel.findByIdAndUpdate(
-            id,
-            scheduleData,
-            { new: true }
-        )
-            .populate('departmentId')
-            .populate('courseId')
-            .populate('teacherId');
-        return doc ? new Schedule({ ...doc.toObject(), _id: doc._id }) : null;
+        return this.update(id, scheduleData);
     }
 
     async deleteSchedule(id: string): Promise<boolean> {
-        const result = await ScheduleModel.findByIdAndDelete(id);
-        return !!result;
+        return this.delete(id);
     }
 
     async getAllSchedules(): Promise<Schedule[]> {
-        const docs = await ScheduleModel.find()
+        const docs = await this._model.find()
             .populate('departmentId')
             .populate('courseId')
             .populate('teacherId');
-        return docs.map(doc => new Schedule({ ...doc.toObject(), _id: doc._id }));
+        return docs.map(doc => this.toEntity(doc));
     }
 
     async getSchedulesByDepartment(departmentId: string): Promise<Schedule[]> {
-        const docs = await ScheduleModel.find({ departmentId })
+        const docs = await this._model.find({ departmentId })
             .populate('departmentId')
             .populate('courseId')
             .populate('teacherId');
-        return docs.map(doc => new Schedule({ ...doc.toObject(), _id: doc._id }));
+        return docs.map(doc => this.toEntity(doc));
     }
 
     async getSchedulesByTeacher(teacherId: string): Promise<Schedule[]> {
-        const docs = await ScheduleModel.find({ teacherId })
+        const docs = await this._model.find({ teacherId })
             .populate('departmentId')
             .populate('courseId')
             .populate('teacherId');
-        return docs.map(doc => new Schedule({ ...doc.toObject(), _id: doc._id }));
+        return docs.map(doc => this.toEntity(doc));
     }
 
     async findSchedulesByTeacherAndDay(teacherId: string, day: string): Promise<Schedule[]> {
-        const docs = await ScheduleModel.find({ teacherId, day })
+        const docs = await this._model.find({ teacherId, day })
             .populate('departmentId')
             .populate('courseId')
             .populate('teacherId');
-        return docs.map(doc => new Schedule({ ...doc.toObject(), _id: doc._id }));
+        return docs.map(doc => this.toEntity(doc));
     }
 }

@@ -2,8 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { AnnouncementUseCase } from '../../application/useCases/AnnouncementUseCase';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 
+import { ILogger } from '../../application/Interfaces/ILogger';
+
 export class AnnouncementController {
-  constructor(private announcementUseCase: AnnouncementUseCase) {}
+  constructor(
+    private announcementUseCase: AnnouncementUseCase,
+    private logger: ILogger
+  ) {}
 
   async createAnnouncement(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -17,7 +22,7 @@ export class AnnouncementController {
         success: true
       });
     } catch (error) {
-      console.error('Error in createAnnouncement:', error);
+      this.logger.error('Error in createAnnouncement:', error);
       next(error);
     }
   }
@@ -32,7 +37,7 @@ export class AnnouncementController {
         success: true
       });
     } catch (error) {
-       console.error('Error in getAllAnnouncements:', error);
+       this.logger.error('Error in getAllAnnouncements:', error);
        next(error);
     }
   }
@@ -56,7 +61,7 @@ export class AnnouncementController {
         success: true
       });
     } catch (error) {
-        console.error('Error in getAnnouncementById:', error);
+        this.logger.error('Error in getAnnouncementById:', error);
         next(error);
     }
   }
@@ -82,7 +87,7 @@ export class AnnouncementController {
         success: true
       });
     } catch (error) {
-        console.error('Error in updateAnnouncement:', error);
+        this.logger.error('Error in updateAnnouncement:', error);
         next(error);
     }
   }
@@ -105,7 +110,7 @@ export class AnnouncementController {
         success: true
       });
     } catch (error) {
-        console.error('Error in deleteAnnouncement:', error);
+        this.logger.error('Error in deleteAnnouncement:', error);
         next(error);
     }
   }

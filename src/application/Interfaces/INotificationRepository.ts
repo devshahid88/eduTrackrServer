@@ -1,9 +1,10 @@
-import { INotification } from "../../infrastructure/models/notification.models";
+import { Notification } from '../../domain/entities/Notification';
+import { IBaseRepository } from './IBaseRepository';
 
-export interface INotificationRepository {
-  createNotification(notification: Partial<INotification>): Promise<INotification>;
-  getNotifications(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<INotification[]>;
-  markAsRead(notificationId: string): Promise<INotification>;
+export interface INotificationRepository extends IBaseRepository<Notification> {
+  createNotification(notification: Partial<Notification>): Promise<Notification>;
+  getNotifications(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<Notification[]>;
+  markAsRead(notificationId: string): Promise<Notification>;
   markAllAsRead(userId: string, userModel: 'Teacher' | 'Student' | 'Admin'): Promise<void>;
   deleteNotification(notificationId: string): Promise<void>;
-} 
+}

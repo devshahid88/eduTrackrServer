@@ -2,8 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { NotificationUseCase } from '../../application/useCases/NotificationUseCase';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 
+import { ILogger } from '../../application/Interfaces/ILogger';
+
 export class NotificationController {
-  constructor(private notificationUseCase: NotificationUseCase) {}
+  constructor(
+    private notificationUseCase: NotificationUseCase,
+    private logger: ILogger
+  ) {}
 
 async getNotifications(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -11,7 +16,7 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
     // Note: JWT contains 'id' and 'role', not 'userId' and 'userModel'
     const { id: userId, role: userModel } = req.user || {};
 
-    console.log('Getting notifications for:', { userId, userModel });
+    this.logger.info(`Getting notifications for: ${JSON.stringify({ userId, userModel })}`);
 
     if (!userId || !userModel) {
       res.status(HttpStatus.BAD_REQUEST).json({
@@ -39,12 +44,12 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
 
     // Transform notifications to match frontend expectations
     const transformedNotifications = notifications.map(notification => ({
-      _id: notification._id.toString(), // Frontend expects _id, not id
+      _id: notification._id || '', // Handle optional
       type: notification.type,
-      title: notification.title, // Include title field
+      title: notification.title,
       message: notification.message,
       sender: notification.sender,
-      senderModel: notification.senderModel, // Include senderModel if needed
+      senderModel: notification.senderModel,
       role: notification.role,
       read: notification.read,
       timestamp: notification.timestamp,
@@ -61,7 +66,7 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
       success: true
     });
   } catch (error) {
-    console.error('Error in getNotifications:', error);
+    this.logger.error('Error in getNotifications:', error);
     next(error);
   }
 }
@@ -86,7 +91,7 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
         success: true
       });
     } catch (error) {
-      console.error('Error in markAsRead:', error);
+      this.logger.error('Error in markAsRead:', error);
       next(error);
     }
   }
@@ -121,7 +126,7 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
         success: true
       });
     } catch (error) {
-      console.error('Error in markAllAsRead:', error);
+      this.logger.error('Error in markAllAsRead:', error);
       next(error);
     }
   }
@@ -145,7 +150,7 @@ async getNotifications(req: Request, res: Response, next: NextFunction): Promise
         success: true
       });
     } catch (error) {
-      console.error('Error in deleteNotification:', error);
+      this.logger.error('Error in deleteNotification:', error);
       next(error);
     }
   }

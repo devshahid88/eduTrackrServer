@@ -2,8 +2,13 @@
 import { ITeacherRepository } from "../Interfaces/ITeacher";
 import Teacher from "../../domain/entities/Teacher";
 
+import { ILogger } from "../Interfaces/ILogger";
+
 export class TeacherUseCase {
-    constructor(private teacherRepository: ITeacherRepository) {}
+    constructor(
+        private teacherRepository: ITeacherRepository,
+        private logger: ILogger
+    ) {}
 
     async createTeacher(teacher: Teacher): Promise<Teacher> {
         return await this.teacherRepository.createTeacher(teacher);
@@ -30,7 +35,7 @@ export class TeacherUseCase {
     try {
       return await this.teacherRepository.searchUsers(searchTerm, role);
     } catch (err: any) {
-      console.error("Search Teachers Error:", err);
+      this.logger.error("Search Teachers Error:", err);
       throw new Error("Failed to search teachers");
     }
   }

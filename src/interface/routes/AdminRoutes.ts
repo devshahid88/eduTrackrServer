@@ -11,15 +11,17 @@ import { authenticateToken, authorizeRoles } from "../middleware/auth";
 
 import { validateUser, validateUserUpdate, validateProfileImage } from "../middleware/validation";
 
+import logger from "../../infrastructure/config/logger";
+
 const router = Router();
 
 // Initialize repositories and use cases
-const adminRepository = new AdminRepository();
-const teacherRepository = new TeacherRepository();
-const studentRepository = new StudentRepository();
+const adminRepository = new AdminRepository(logger);
+const teacherRepository = new TeacherRepository(logger);
+const studentRepository = new StudentRepository(logger);
 const emailService = new EmailService();
-const adminUseCase = new AdminUseCase(adminRepository, emailService, teacherRepository, studentRepository);
-const adminController = new AdminController(adminUseCase);
+const adminUseCase = new AdminUseCase(adminRepository, emailService, teacherRepository, studentRepository, logger);
+const adminController = new AdminController(adminUseCase, logger);
 
 // Admin routes - Only admins can manage other admins
 router.post("/create", 

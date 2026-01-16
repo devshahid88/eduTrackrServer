@@ -1,8 +1,13 @@
 import { IConcernRepository } from '../Interfaces/IConcernRepository';
 import { Concern, ConcernStatus } from '../../domain/entities/Concern';
 
+import { ILogger } from '../Interfaces/ILogger';
+
 export class ConcernUseCase {
-  constructor(private concernRepository: IConcernRepository) {}
+  constructor(
+    private concernRepository: IConcernRepository,
+    private logger: ILogger
+  ) {}
 
   async raiseConcern(data: Partial<Concern>): Promise<Concern> {
     return this.concernRepository.createConcern(data);

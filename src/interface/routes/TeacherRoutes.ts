@@ -8,11 +8,13 @@ import { validateUser, validateUserUpdate, validateProfileImage } from "../middl
 import { upload } from "../middleware/multer";
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 
+import logger from "../../infrastructure/config/logger";
+
 const router = Router();
 
-const teacherRepository = new TeacherRepository();
-const teacherUseCase = new TeacherUseCase(teacherRepository);
-const teacherController = new TeacherController(teacherUseCase);
+const teacherRepository = new TeacherRepository(logger);
+const teacherUseCase = new TeacherUseCase(teacherRepository, logger);
+const teacherController = new TeacherController(teacherUseCase, logger);
 
 // Teacher creation - Only admins can create teachers
 router.post('/create', 

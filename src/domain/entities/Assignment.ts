@@ -1,6 +1,7 @@
 
 
 export interface AssignmentSubmission {
+  _id?: string;
   id?: string;
   assignmentId: string;
   studentId: string;
@@ -19,6 +20,7 @@ export interface AssignmentSubmission {
 }
 
 export interface Assignment {
+  _id?: string;
   id?: string;
   title: string;
   description: string;

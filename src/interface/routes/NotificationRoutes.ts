@@ -6,11 +6,13 @@ import { NotificationRepository } from '../../infrastructure/repositories/Notifi
 import { authenticateToken, authorizeRoles } from '../middleware/auth';
 import { isValidObjectId } from 'mongoose';
 
+import logger from '../../infrastructure/config/logger';
+
 const router = Router();
 
-const notificationRepository = new NotificationRepository();
-const notificationUseCase = new NotificationUseCase(notificationRepository);
-const notificationController = new NotificationController(notificationUseCase);
+const notificationRepository = new NotificationRepository(logger);
+const notificationUseCase = new NotificationUseCase(notificationRepository, logger);
+const notificationController = new NotificationController(notificationUseCase, logger);
 
 // Middleware to validate notification ID
 const validateNotificationId = (req: any, res: any, next: any) => {

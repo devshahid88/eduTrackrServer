@@ -14,15 +14,12 @@ import { isValidObjectId } from 'mongoose';
 // Configure multer storage for chat media uploads
 const chatStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
-    params:async (req,res) => {return{
-        folder: 'chat_media',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
-        resource_type: 'auto',
-        transformation: [
-            { width: 1000, height: 1000, crop: 'limit' }, // Limit image size
-            { quality: 'auto' } // Optimize quality
-        ]
-    }}
+    params: async (req, file) => {
+        return {
+            folder: 'chat_media',
+            resource_type: 'auto',
+        }
+    }
 });
 
 const upload = multer({
@@ -45,13 +42,15 @@ const validateChatId = (req: any, res: any, next: any) => {
     next();
 };
 
+import logger from '../../infrastructure/config/logger';
+
 export function createChatRoutes(io: Server): Router {
     const router = Router();
     
-    const chatRepository = new ChatRepository();
-    const notificationRepository = new NotificationRepository();
-    const chatUseCase = new ChatUseCase(chatRepository, notificationRepository, io);
-    const chatController = new ChatController(chatUseCase);
+    const chatRepository = new ChatRepository(logger);
+    const notificationRepository = new NotificationRepository(logger);
+    const chatUseCase = new ChatUseCase(chatRepository, notificationRepository, io, logger);
+    const chatController = new ChatController(chatUseCase, logger);
 
     // Error handling middleware for multer
     const handleMulterError = (err: any, req: Request, res: Response, next: Function) => {

@@ -1,31 +1,30 @@
 import { IAnnouncementRepository } from '../../application/Interfaces/IAnnouncementRepository';
-import { IAnnouncement, AnnouncementModel } from '../models/AnnouncementModel';
+import { Announcement } from '../../domain/entities/Announcement';
+import { AnnouncementModel, IAnnouncement } from '../models/AnnouncementModel';
+import { BaseRepository } from "./BaseRepository";
+import { AnnouncementMapper } from "../mappers/AnnouncementMapper";
 
-export class AnnouncementRepository implements IAnnouncementRepository {
-  async create(announcement: Partial<IAnnouncement>): Promise<IAnnouncement> {
-    const newAnnouncement = new AnnouncementModel(announcement);
-    return await newAnnouncement.save();
+import { ILogger } from '../../application/Interfaces/ILogger';
+
+export class AnnouncementRepository extends BaseRepository<Announcement, IAnnouncement> implements IAnnouncementRepository {
+
+  constructor(private logger: ILogger) {
+    super(AnnouncementModel);
   }
 
-  async findAll(): Promise<IAnnouncement[]> {
-    return await AnnouncementModel.find().sort({ createdAt: -1 });
+  protected toEntity(model: IAnnouncement): Announcement {
+    return AnnouncementMapper.toDomain(model);
   }
 
-  async findById(id: string): Promise<IAnnouncement | null> {
-    return await AnnouncementModel.findById(id);
+  // Override findAll to keep the sort order
+  async findAll(): Promise<Announcement[]> {
+    const foundList = await this._model.find().sort({ createdAt: -1 });
+    return foundList.map((item) => this.toEntity(item));
   }
 
-  async update(id: string, announcement: Partial<IAnnouncement>): Promise<IAnnouncement | null> {
-    return await AnnouncementModel.findByIdAndUpdate(id, announcement, { new: true });
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const result = await AnnouncementModel.findByIdAndDelete(id);
-    return !!result;
-  }
-
-  async findByTargetRole(role: string): Promise<IAnnouncement[]> {
+  async findByTargetRole(role: string): Promise<Announcement[]> {
     // Find announcements where targetRoles array includes the specified role
-    return await AnnouncementModel.find({ targetRoles: role }).sort({ createdAt: -1 });
+    const announcements = await this._model.find({ targetRoles: role }).sort({ createdAt: -1 });
+    return announcements.map(a => this.toEntity(a));
   }
 }

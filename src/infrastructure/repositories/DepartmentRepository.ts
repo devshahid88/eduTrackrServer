@@ -1,51 +1,53 @@
 import { IDepartmentRepository } from "../../application/Interfaces/IDepartmentRepository";
 import { Department } from "../../domain/entities/Department";
-import DepartmentModel from "../models/DepartmentModel";
+import DepartmentModel, { IDepartmentDocument } from "../models/DepartmentModel";
+import { BaseRepository } from "./BaseRepository";
+import { DepartmentMapper } from "../mappers/DepartmentMapper";
 
-function mapToDepartmentEntity(data: any): Department {
-  return Department.create({
-    ...data,
-    _id: data._id.toString(),
-  });
-}
+import { ILogger } from "../../application/Interfaces/ILogger";
 
-export class DepartmentRepository implements IDepartmentRepository {
+export class DepartmentRepository extends BaseRepository<Department, IDepartmentDocument> implements IDepartmentRepository {
+  
+  constructor(private logger: ILogger) {
+    super(DepartmentModel);
+  }
+
+  protected toEntity(model: IDepartmentDocument): Department {
+    return DepartmentMapper.toDomain(model);
+  }
+
   async createDepartment(department: Department): Promise<Department> {
-    const newDepartment = await DepartmentModel.create(department);
-    return mapToDepartmentEntity(newDepartment.toObject());
+    return this.create(department);
   }
 
   async findDepartmentById(id: string): Promise<Department | null> {
-    const department = await DepartmentModel.findById(id);
-    return department ? mapToDepartmentEntity(department.toObject()) : null;
+    return this.findById(id);
   }
 
   async findDepartmentByCode(code: string): Promise<Department | null> {
-    const department = await DepartmentModel.findOne({ code });
-    return department ? mapToDepartmentEntity(department.toObject()) : null;
+    const department = await this._model.findOne({ code });
+    return department ? this.toEntity(department) : null;
   }
 
   async findDepartmentByEmail(email: string): Promise<Department | null> {
-    const department = await DepartmentModel.findOne({ departmentEmail: email });
-    return department ? mapToDepartmentEntity(department.toObject()) : null;
+    const department = await this._model.findOne({ departmentEmail: email });
+    return department ? this.toEntity(department) : null;
   }
 
   async updateDepartment(id: string, department: Partial<Department>): Promise<Department | null> {
-    const updatedDepartment = await DepartmentModel.findByIdAndUpdate(
+    const updatedDepartment = await this._model.findByIdAndUpdate(
       id,
       { ...department, updatedAt: new Date() },
       { new: true }
     );
-    return updatedDepartment ? mapToDepartmentEntity(updatedDepartment.toObject()) : null;
+    return updatedDepartment ? this.toEntity(updatedDepartment) : null;
   }
 
   async deleteDepartment(id: string): Promise<boolean> {
-    const result = await DepartmentModel.findByIdAndDelete(id);
-    return !!result;
+    return this.delete(id);
   }
 
   async getAllDepartments(): Promise<Department[]> {
-    const departments = await DepartmentModel.find();
-    return departments.map(department => mapToDepartmentEntity(department.toObject()));
+    return this.findAll();
   }
 }

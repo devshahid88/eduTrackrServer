@@ -3,8 +3,13 @@ import { AdminUseCase } from "../../application/useCases/AdminUseCase";
 import { HttpStatus } from "../../common/enums/http-status.enum";
 import { HttpMessage } from "../../common/enums/http-message.enum";
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class AdminController {
-  constructor(private adminUseCase: AdminUseCase) {}
+  constructor(
+    private adminUseCase: AdminUseCase,
+    private logger: ILogger
+  ) {}
 
   async createAdminWithImage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -149,7 +154,7 @@ export class AdminController {
       }
 
       const users = await this.adminUseCase.searchUsers(searchTerm, role as string);
-      console.log("Search Users Result:", users);
+      this.logger.info(`Search Users Result: ${users.length} users found`);
 
       res.status(HttpStatus.OK).json({
         success: true,

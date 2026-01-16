@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import logger from './infrastructure/config/logger';
 import cors from 'cors';
 import path from 'path';
 import { Server } from 'socket.io';
@@ -21,16 +22,6 @@ import  createNotificationRoutes  from './interface/routes/NotificationRoutes';
 import { createChatRoutes } from './interface/routes/ChatRoutes';
 import { initializeSocket } from './infrastructure/config/socket';
 import ConcernRoutes from './interface/routes/ConcernRoutes';
-import { AnnouncementRepository } from './infrastructure/repositories/AnnouncementRepository';
-import { NotificationRepository } from './infrastructure/repositories/NotificationRepository';
-import { StudentRepository } from './infrastructure/repositories/studentRepository';
-import { TeacherRepository } from './infrastructure/repositories/TeacherRepository';
-import { NotificationUseCase } from './application/useCases/NotificationUseCase';
-import { AnnouncementUseCase } from './application/useCases/AnnouncementUseCase';
-import { AnnouncementController } from './interface/controllers/AnnouncementController';
-import { AssignmentRepository } from './infrastructure/repositories/AssignmentRepository';
-import { AssignmentUseCase } from './application/useCases/AssignmentUseCase';
-import { AssignmentController } from './interface/controllers/AssignmentController';
 import { AgoraController } from './interface/controllers/AgoraController';
 import mongoose from 'mongoose';
 
@@ -86,8 +77,6 @@ app.use('/api/concerns', ConcernRoutes);
 app.use('/api/resources', ResourceRoutes);
 app.use('/api/announcements', AnnouncementRoutes);
 
-import { LoggerService } from './infrastructure/services/LoggerService';
-const logger = new LoggerService();
 const agoraController = new AgoraController(logger);
 app.post('/api/agora/token', (req, res) => agoraController.generateToken(req, res));
 
@@ -95,40 +84,15 @@ app.post('/api/agora/token', (req, res) => agoraController.generateToken(req, re
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   const status = err.status || 500;
-  console.log(err.message)
+  logger.error(`Error: ${err.message}`, { stack: err.stack });
   res.status(status).json({
     error: err.message || 'Something went wrong!',
-    
     status,
   });
 });
 
-
-// Initialize Repositories
-const announcementRepository = new AnnouncementRepository();
-const notificationRepository = new NotificationRepository();
-const studentRepository = new StudentRepository();
-const teacherRepository = new TeacherRepository();
-const assignmentRepository = new AssignmentRepository(); // Added
-
-// Initialize UseCases
-const notificationUseCase = new NotificationUseCase(notificationRepository);
-const announcementUseCase = new AnnouncementUseCase(
-  announcementRepository, 
-  notificationUseCase, 
-  studentRepository, 
-  teacherRepository
-);
-const announcementController = new AnnouncementController(announcementUseCase);
-const assignmentUseCase = new AssignmentUseCase(
-  assignmentRepository,
-  notificationUseCase,
-  studentRepository
-);
-const assignmentController = new AssignmentController(assignmentUseCase);
-
 const PORT = process.env.PORT || 3003;
 
 httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  logger.info(`Server is running on port ${PORT}`);
 });

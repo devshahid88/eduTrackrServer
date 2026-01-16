@@ -1,6 +1,7 @@
 import Schedule from '../../domain/entities/Schedule';
+import { IBaseRepository } from './IBaseRepository';
 
-export interface IScheduleRepository {
+export interface IScheduleRepository extends IBaseRepository<Schedule> {
     createSchedule(schedule: Schedule): Promise<Schedule>;
     findScheduleById(id: string): Promise<Schedule | null>;
     updateSchedule(id: string, scheduleData: Partial<Schedule>): Promise<Schedule | null>;

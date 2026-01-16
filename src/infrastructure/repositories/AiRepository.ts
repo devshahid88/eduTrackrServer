@@ -1,9 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class AiRepository {
     private genAI: GoogleGenAI;
 
-    constructor() {
+    constructor(private logger: ILogger) {
         const apiKey = process.env.GEMINI_API_KEY;
         
         if (!apiKey) {
@@ -28,7 +30,7 @@ export class AiRepository {
 
             return response.text;
         } catch (error: any) {
-            console.error('Error generating AI response:', error);
+            this.logger.error('Error generating AI response:', error);
             
             // Handle specific error cases
             if (error.status === 403) {

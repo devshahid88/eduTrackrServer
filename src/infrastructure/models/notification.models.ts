@@ -1,7 +1,6 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-export interface INotification {
-  _id: string;
+export interface INotification extends Document {
   userId: mongoose.Types.ObjectId;
   userModel: 'Teacher' | 'Student' | 'Admin';
   type: 'message' | 'media' | 'reaction' | 'reply' | 'assignment' | 'grade' | 'system' | 'announcement';

@@ -3,8 +3,13 @@ import { CourseUseCase } from "../../application/useCases/CourseUseCase";
 import { isValidObjectId } from "mongoose";
 import { HttpStatus } from '../../common/enums/http-status.enum';
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class CourseController {
-  constructor(private courseUseCase: CourseUseCase) {}
+  constructor(
+    private courseUseCase: CourseUseCase,
+    private logger: ILogger
+  ) {}
 
   async createCourse(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -15,7 +20,7 @@ export class CourseController {
         data: course
       });
     } catch (error: any) {
-      console.error("Create course error:", error);
+      this.logger.error("Create course error:", error);
       next(error);
     }
   }
@@ -36,7 +41,7 @@ export class CourseController {
 
       res.status(HttpStatus.OK).json({ success: true, data: course });
     } catch (error: any) {
-      console.error("Get course error:", error);
+      this.logger.error("Get course error:", error);
       next(error);
     }
   }
@@ -52,7 +57,7 @@ export class CourseController {
       const courses = await this.courseUseCase.getCoursesByDepartment(departmentId);
       res.status(HttpStatus.OK).json({ success: true, data: courses });
     } catch (error: any) {
-      console.error("Get courses by department error:", error);
+      this.logger.error("Get courses by department error:", error);
       next(error);
     }
   }
@@ -77,7 +82,7 @@ export class CourseController {
         data: course
       });
     } catch (error: any) {
-      console.error("Update course error:", error);
+      this.logger.error("Update course error:", error);
       next(error);
     }
   }
@@ -101,7 +106,7 @@ export class CourseController {
         message: "Course deleted successfully"
       });
     } catch (error: any) {
-      console.error("Delete course error:", error);
+      this.logger.error("Delete course error:", error);
       next(error);
     }
   }
@@ -111,7 +116,7 @@ export class CourseController {
       const courses = await this.courseUseCase.getAllCourses();
       res.status(HttpStatus.OK).json({ success: true, data: courses });
     } catch (error: any) {
-      console.error("Get all courses error:", error);
+      this.logger.error("Get all courses error:", error);
       next(error);
     }
   }

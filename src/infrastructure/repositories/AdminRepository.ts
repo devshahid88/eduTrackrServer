@@ -4,9 +4,11 @@ import adminModel, { IAdminDocument } from "../models/AdminModel";
 import { BaseRepository } from "./BaseRepository";
 import { AdminMapper } from "../mappers/AdminMapper";
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class AdminRepository extends BaseRepository<Admin, IAdminDocument> implements IAdminRepository {
     
-    constructor() {
+    constructor(private logger: ILogger) {
         super(adminModel);
     }
 

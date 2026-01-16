@@ -6,8 +6,13 @@ import { HttpStatus } from '../../common/enums/http-status.enum';
 import { createHttpError } from "../../common/utils/createHttpError";
 import { isValidObjectId } from "mongoose";
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class TeacherController {
-  constructor(private teacherUseCase: TeacherUseCase) {}
+  constructor(
+    private teacherUseCase: TeacherUseCase,
+    private logger: ILogger
+  ) {}
 
   async createTeacherWithImage(req: Request, res: Response, next: NextFunction): Promise<void> {
     let emailError: any = null;
@@ -56,7 +61,7 @@ export class TeacherController {
         });
       } catch (error: any) {
         emailError = error;
-        console.warn(`Failed to send email to ${teacher.email}: ${error.message}`);
+        this.logger.warn(`Failed to send email to ${teacher.email}: ${error.message}`);
       }
 
       res.status(HttpStatus.CREATED).json({
@@ -65,7 +70,7 @@ export class TeacherController {
         data: teacher,
       });
     } catch (error) {
-      console.error("Create Teacher Error:", error);
+      this.logger.error("Create Teacher Error:", error);
       next(error);
     }
   }
@@ -96,7 +101,7 @@ export class TeacherController {
         },
       });
     } catch (error) {
-      console.error("Update Profile Image Error:", error);
+      this.logger.error("Update Profile Image Error:", error);
       next(error);
     }
   }
@@ -113,7 +118,7 @@ export class TeacherController {
         data: teacher,
       });
     } catch (error) {
-      console.error("Find Teacher Error:", error);
+      this.logger.error("Find Teacher Error:", error);
       next(error);
     }
   }
@@ -158,7 +163,7 @@ export class TeacherController {
         data: updatedTeacher,
       });
     } catch (error) {
-      console.error("Update Teacher Error:", error);
+      this.logger.error("Update Teacher Error:", error);
       next(error);
     }
   }
@@ -175,7 +180,7 @@ export class TeacherController {
         message: "Teacher deleted successfully",
       });
     } catch (error) {
-      console.error("Delete Teacher Error:", error);
+      this.logger.error("Delete Teacher Error:", error);
       next(error);
     }
   }
@@ -183,13 +188,13 @@ export class TeacherController {
   async getAllTeachers(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const teachers = await this.teacherUseCase.getAllTeachers();
-      console.log("Get All Teachers:", teachers);
+      this.logger.info(`Get All Teachers: ${teachers.length} found`);
       res.status(HttpStatus.OK).json({
         success: true,
         data: teachers,
       });
     } catch (error) {
-      console.error("Get All Teachers Error:", error);
+      this.logger.error("Get All Teachers Error:", error);
       next(error);
     }
   }

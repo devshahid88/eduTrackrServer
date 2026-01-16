@@ -1,30 +1,28 @@
 import { IResourceRepository } from '../../application/Interfaces/IResourceRepository';
 import { IResource, ResourceModel } from '../models/ResourceModel';
+import { Resource } from '../../domain/entities/Resource';
+import { BaseRepository } from "./BaseRepository";
+import { ResourceMapper } from "../mappers/ResourceMapper";
 
-export class ResourceRepository implements IResourceRepository {
-  async create(resource: Partial<IResource>): Promise<IResource> {
-    const newResource = new ResourceModel(resource);
-    return await newResource.save();
+import { ILogger } from '../../application/Interfaces/ILogger';
+
+export class ResourceRepository extends BaseRepository<Resource, IResource> implements IResourceRepository {
+  
+  constructor(private logger: ILogger) {
+    super(ResourceModel);
   }
 
-  async findAll(filter: any = {}): Promise<IResource[]> {
-    return await ResourceModel.find(filter).sort({ createdAt: -1 });
+  protected toEntity(model: IResource): Resource {
+    return ResourceMapper.toDomain(model);
   }
 
-  async findById(id: string): Promise<IResource | null> {
-    return await ResourceModel.findById(id);
+  async findAll(filter: any = {}): Promise<Resource[]> {
+    const resources = await this._model.find(filter).sort({ createdAt: -1 });
+    return resources.map(r => this.toEntity(r));
   }
 
-  async update(id: string, resource: Partial<IResource>): Promise<IResource | null> {
-    return await ResourceModel.findByIdAndUpdate(id, resource, { new: true });
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const result = await ResourceModel.findByIdAndDelete(id);
-    return !!result;
-  }
-
-  async findByCourseId(courseId: string): Promise<IResource[]> {
-    return await ResourceModel.find({ courseId }).sort({ createdAt: -1 });
+  async findByCourseId(courseId: string): Promise<Resource[]> {
+    const resources = await this._model.find({ courseId }).sort({ createdAt: -1 });
+    return resources.map(r => this.toEntity(r));
   }
 }

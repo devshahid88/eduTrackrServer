@@ -6,11 +6,13 @@ import { DepartmentRepository } from "../../infrastructure/repositories/Departme
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import { isValidObjectId } from "mongoose";
 
+import logger from "../../infrastructure/config/logger";
+
 const router = Router();
 
-const departmentRepository = new DepartmentRepository();
-const departmentUseCase = new DepartmentUseCase(departmentRepository);
-const departmentController = new DepartmentController(departmentUseCase);
+const departmentRepository = new DepartmentRepository(logger);
+const departmentUseCase = new DepartmentUseCase(departmentRepository, logger);
+const departmentController = new DepartmentController(departmentUseCase, logger);
 
 // Middleware to validate ObjectId
 const validateObjectId = (req: any, res: any, next: any) => {

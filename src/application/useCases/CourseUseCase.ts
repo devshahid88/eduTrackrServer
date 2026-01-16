@@ -4,8 +4,13 @@ import { createHttpError } from '../../common/utils/createHttpError';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 import { CourseMessage } from '../../common/enums/http-message.enum';
 
+import { ILogger } from '../Interfaces/ILogger';
+
 export class CourseUseCase {
-  constructor(private courseRepository: ICourseRepository) {}
+  constructor(
+    private courseRepository: ICourseRepository,
+    private logger: ILogger
+  ) {}
 
   async createCourse(courseData: Partial<Course>): Promise<Course> {
     if (!courseData.name || courseData.name.trim() === '') {

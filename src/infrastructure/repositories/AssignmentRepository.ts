@@ -1,50 +1,36 @@
-// AssignmentRepository.ts
-
 import { IAssignmentRepository } from '../../application/Interfaces/IAssignmentRepository';
 import { Assignment, AssignmentFilters, AssignmentSubmission } from '../../domain/entities/Assignment';
-import AssignmentModel from '../models/Assignment';
+import AssignmentModel, { IAssignmentDocument } from '../models/Assignment';
 import mongoose from 'mongoose';
+import { BaseRepository } from "./BaseRepository";
+import { AssignmentMapper } from "../mappers/AssignmentMapper";
 
-function mapToAssignmentEntity(data: any): Assignment {
-  return {
-    ...data,
-    id: data._id.toString(),
-    departmentId: data.departmentId?._id?.toString() || data.departmentId?.toString(),
-    teacherId: data.teacherId?._id?.toString() || data.teacherId?.toString(),
-    courseId: data.courseId?._id?.toString() || data.courseId?.toString(),
-    departmentName: data.departmentId?.name || undefined,
-    teacherName: data.teacherId?.username || undefined,
-    courseName: data.courseId?.name || undefined,
-    submissions: data.submissions?.map((sub: any) => mapToSubmissionEntity({
-      ...sub.toObject ? sub.toObject() : sub,
-      assignmentId: data._id.toString()
-    })) || []
-  };
-}
+import { ILogger } from '../../application/Interfaces/ILogger';
 
-function mapToSubmissionEntity(data: any): AssignmentSubmission {
-  return {
-    ...data,
-    id: data._id?.toString() || data.id,
-    assignmentId: data.assignmentId?.toString(),
-    studentId: data.studentId?.toString(),
-    studentName: data.studentName,
-    submittedAt: data.submittedAt,
-    isLate: data.isLate,
-    submissionContent: data.submissionContent || { text: '', files: [] },
-    grade: data.grade,
-    feedback: data.feedback
-  };
-}
+export class AssignmentRepository extends BaseRepository<Assignment, IAssignmentDocument> implements IAssignmentRepository {
 
-export class AssignmentRepository implements IAssignmentRepository {
+  constructor(private logger: ILogger) {
+    super(AssignmentModel);
+  }
+
+  protected toEntity(model: IAssignmentDocument): Assignment {
+    return AssignmentMapper.toDomain(model);
+  }
+
+  // Populate helper
+  private get populateQuery() {
+    return [
+      { path: 'departmentId', select: 'name' },
+      { path: 'teacherId', select: 'username firstname lastname' },
+      { path: 'courseId', select: 'name' }
+    ];
+  }
+
   async create(assignment: Partial<Assignment>): Promise<Assignment> {
-    console.log('Repository - Creating assignment with data:', assignment);
-    
-    // Ensure attachments is an array of Cloudinary URLs
+    this.logger.info(`Repository - Creating assignment with data: ${JSON.stringify(assignment)}`);
     const attachments = Array.isArray(assignment.attachments) ? assignment.attachments : [];
-    console.log('Repository - Attachments to save:', attachments);
-
+    
+    // Manual creation because Input Partial<Assignment> doesn't perfectly match Mongoose Model
     const newAssignment = await AssignmentModel.create({
       title: assignment.title,
       description: assignment.description,
@@ -54,7 +40,7 @@ export class AssignmentRepository implements IAssignmentRepository {
       courseId: new mongoose.Types.ObjectId(assignment.courseId),
       departmentId: new mongoose.Types.ObjectId(assignment.departmentId),
       teacherId: new mongoose.Types.ObjectId(assignment.teacherId),
-      attachments: attachments, // Save Cloudinary URLs
+      attachments: attachments,
       allowLateSubmission: assignment.allowLateSubmission,
       lateSubmissionPenalty: assignment.lateSubmissionPenalty,
       submissionFormat: assignment.submissionFormat,
@@ -62,19 +48,13 @@ export class AssignmentRepository implements IAssignmentRepository {
       maxGroupSize: assignment.maxGroupSize,
       status: assignment.status || 'active'
     });
-
-    console.log('Repository - Created assignment:', newAssignment);
     
-    return mapToAssignmentEntity(newAssignment.toObject());
+    return this.toEntity(newAssignment);
   }
 
   async findById(id: string): Promise<Assignment | null> {
-    const assignment = await AssignmentModel.findById(id)
-      .populate('departmentId', 'name')
-      .populate('teacherId','username')
-      .populate('courseId', 'name');
-    
-    return assignment ? mapToAssignmentEntity(assignment.toObject()) : null;
+    const assignment = await this._model.findById(id).populate(this.populateQuery);
+    return assignment ? this.toEntity(assignment) : null;
   }
 
   async findAll(filters?: AssignmentFilters): Promise<Assignment[]> {
@@ -87,78 +67,66 @@ export class AssignmentRepository implements IAssignmentRepository {
       if (filters.status) query.status = filters.status;
     }
 
-    let assignmentQuery = AssignmentModel.find(query)
-      .populate('departmentId', 'name')
-      .populate('teacherId','username')
-      .populate('courseId', 'name');
+    let assignmentQuery = this._model.find(query).populate(this.populateQuery);
 
     if (filters?.sortBy) {
       assignmentQuery = assignmentQuery.sort(filters.sortBy);
     }
     
     const assignments = await assignmentQuery;                  
-    return assignments.map(assignment => mapToAssignmentEntity(assignment.toObject()));
+    return assignments.map(assignment => this.toEntity(assignment));
   }
 
   async findByDepartmentId(departmentId: string): Promise<Assignment[]> {
-    const assignments = await AssignmentModel.find({ departmentId: new mongoose.Types.ObjectId(departmentId) })
-      .populate('departmentId', 'name')
-       .populate('teacherId','username')
-      .populate('courseId', 'name');
-    
-    return assignments.map(assignment => mapToAssignmentEntity(assignment.toObject()));
+    const assignments = await this._model.find({ departmentId: new mongoose.Types.ObjectId(departmentId) })
+      .populate(this.populateQuery);
+    return assignments.map(assignment => this.toEntity(assignment));
   }
 
   async findByTeacherId(teacherId: string): Promise<Assignment[]> {
-    const assignments = await AssignmentModel.find({ teacherId: new mongoose.Types.ObjectId(teacherId) })
-      .populate('departmentId', 'name')
-       .populate('teacherId','username')
-      .populate('courseId', 'name');
-    
-    return assignments.map(assignment => mapToAssignmentEntity(assignment.toObject()));
+    const assignments = await this._model.find({ teacherId: new mongoose.Types.ObjectId(teacherId) })
+      .populate(this.populateQuery);
+    return assignments.map(assignment => this.toEntity(assignment));
   }
 
   async update(id: string, assignment: Partial<Assignment>): Promise<Assignment> {
-    const updatedAssignment = await AssignmentModel.findByIdAndUpdate(
+    // Note: Mongoose update logic might need explicit field handling if assignment object is complex
+    const updatedAssignment = await this._model.findByIdAndUpdate(
       id,
       { ...assignment, updatedAt: new Date() },
       { new: true }
-    )
-      .populate('departmentId', 'name')
-       .populate('teacherId','username')
-      .populate('courseId', 'name');
+    ).populate(this.populateQuery);
     
     if (!updatedAssignment) {
       throw new Error('Assignment not found');
     }
     
-    return mapToAssignmentEntity(updatedAssignment.toObject());
+    return this.toEntity(updatedAssignment);
   }
 
-  async delete(id: string): Promise<void> {
-    const result = await AssignmentModel.findByIdAndDelete(id);
+  async delete(id: string): Promise<boolean> {
+    const result = await this._model.findByIdAndDelete(id);
     if (!result) {
       throw new Error('Assignment not found');
     }
+    return true;
   }
 
   async addSubmission(submission: AssignmentSubmission): Promise<AssignmentSubmission> {
-    const assignment = await AssignmentModel.findById(submission.assignmentId);
+    const assignment = await this._model.findById(submission.assignmentId);
     
     if (!assignment) {
       throw new Error('Assignment not found');
     }
 
     const submittedAt = submission.submittedAt || new Date();
+    // Assuming assignment.dueDate is a Date object, if not, parse it.
     const isLate = new Date(submittedAt) > new Date(assignment.dueDate);
 
-    // Ensure files is an array of Cloudinary URLs
     const files = Array.isArray(submission.submissionContent?.files) 
       ? submission.submissionContent.files 
       : [];
     
-    console.log('Repository - Adding submission with files:', files);
-
     const submissionData = {
       studentId: new mongoose.Types.ObjectId(submission.studentId),
       studentName: submission.studentName,
@@ -166,40 +134,35 @@ export class AssignmentRepository implements IAssignmentRepository {
       isLate,
       submissionContent: {
         text: submission.submissionContent?.text || '',
-        files: files // Save Cloudinary URLs
+        files: files 
       }
     };
 
-    assignment.submissions.push(submissionData);
+    // Cast to any to bypass strict type check for now if ISubmission interface is strict
+    assignment.submissions.push(submissionData as any);
     assignment.totalStudents = assignment.submissions.length;
     
     await assignment.save();
     
     const newSubmission = assignment.submissions[assignment.submissions.length - 1];
-    return mapToSubmissionEntity({
-      // Convert mongoose document to plain object
+    return AssignmentMapper.toSubmissionDomain({
       ...JSON.parse(JSON.stringify(newSubmission)),
-      _id: newSubmission._id,
+      _id: newSubmission._id, // Use _id here as it comes from mongo
       assignmentId: assignment._id
     });
   }
 
   async updateSubmissionGrade(submissionId: string, grade: number, feedback?: string): Promise<AssignmentSubmission> {
-    const assignment = await AssignmentModel.findOne({
+    const assignment = await this._model.findOne({
       'submissions._id': submissionId
     });
 
-    // Fix: Add null check for assignment
     if (!assignment) {
       throw new Error('Assignment not found');
     }
 
-    // Fix: Correct the typo from 'submiited' to 'SUBMITTED'
-    if (assignment.status === 'SUBMITTED') {
-      throw new Error('Assignment already submitted');
-    }
+
     
-    // Fix: Use find() method instead of id() method
     const submission = assignment.submissions.find(sub => sub._id?.toString() === submissionId);
     if (!submission) {
       throw new Error('Submission not found');
@@ -212,8 +175,7 @@ export class AssignmentRepository implements IAssignmentRepository {
     
     await assignment.save();
     
-    return mapToSubmissionEntity({
-      // Convert mongoose document to plain object
+    return AssignmentMapper.toSubmissionDomain({
       ...JSON.parse(JSON.stringify(submission)),
       _id: submission._id,
       assignmentId: assignment._id
@@ -221,15 +183,14 @@ export class AssignmentRepository implements IAssignmentRepository {
   }
 
   async getSubmissions(assignmentId: string): Promise<AssignmentSubmission[]> {
-    const assignment = await AssignmentModel.findById(assignmentId);
+    const assignment = await this._model.findById(assignmentId);
     
     if (!assignment) {
       return [];
     }
     
     return assignment.submissions.map(submission => 
-      mapToSubmissionEntity({
-        // Convert mongoose document to plain object
+      AssignmentMapper.toSubmissionDomain({
         ...JSON.parse(JSON.stringify(submission)),
         _id: submission._id,
         assignmentId: assignment._id
@@ -238,7 +199,7 @@ export class AssignmentRepository implements IAssignmentRepository {
   }
 
   async deleteSubmission(assignmentId: string, studentId: string): Promise<void> {
-    const result = await AssignmentModel.findByIdAndUpdate(
+    const result = await this._model.findByIdAndUpdate(
       assignmentId,
       { 
         $pull: { submissions: { studentId: new mongoose.Types.ObjectId(studentId) } },

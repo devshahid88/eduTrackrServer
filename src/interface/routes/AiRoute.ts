@@ -3,11 +3,13 @@ import { AiController } from '../controllers/AiController';
 import { AiUseCase } from '../../application/useCases/AiUseCase';
 import { AiRepository } from '../../infrastructure/repositories/AiRepository';
 
+import logger from '../../infrastructure/config/logger';
+
 const router = Router();
 
-const aiRepository = new AiRepository();
-const aiUseCase = new AiUseCase(aiRepository);
-const aiController = new AiController(aiUseCase);
+const aiRepository = new AiRepository(logger);
+const aiUseCase = new AiUseCase(aiRepository, logger);
+const aiController = new AiController(aiUseCase, logger);
 
 router.post('/student/chat', aiController.handleStudentChat.bind(aiController));
 

@@ -1,10 +1,7 @@
-import { IAnnouncement } from '../../infrastructure/models/AnnouncementModel';
+import { Announcement } from '../../domain/entities/Announcement';
+import { IBaseRepository } from './IBaseRepository';
 
-export interface IAnnouncementRepository {
-  create(announcement: Partial<IAnnouncement>): Promise<IAnnouncement>;
-  findAll(): Promise<IAnnouncement[]>;
-  findById(id: string): Promise<IAnnouncement | null>;
-  update(id: string, announcement: Partial<IAnnouncement>): Promise<IAnnouncement | null>;
-  delete(id: string): Promise<boolean>;
-  findByTargetRole(role: string): Promise<IAnnouncement[]>;
+export interface IAnnouncementRepository extends IBaseRepository<Announcement> {
+  findByTargetRole(role: string): Promise<Announcement[]>;
 }
+

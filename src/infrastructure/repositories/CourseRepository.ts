@@ -4,9 +4,11 @@ import CourseModel, { ICourseDocument } from "../models/CourseModel";
 import { BaseRepository } from "./BaseRepository";
 import { CourseMapper } from "../mappers/CourseMapper";
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class CourseRepository extends BaseRepository<Course, ICourseDocument> implements ICourseRepository {
   
-  constructor() {
+  constructor(private logger: ILogger) {
     super(CourseModel);
   }
 

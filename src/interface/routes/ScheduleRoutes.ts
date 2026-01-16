@@ -6,12 +6,14 @@ import { ScheduleRepository } from "../../infrastructure/repositories/ScheduleRe
 import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import { isValidObjectId } from "mongoose";
 
+import logger from "../../infrastructure/config/logger";
+
 const router = Router();
 
 // Create instances
-const scheduleRepository = new ScheduleRepository();
-const scheduleUseCase = new ScheduleUseCase(scheduleRepository);
-const scheduleController = new ScheduleController(scheduleUseCase);
+const scheduleRepository = new ScheduleRepository(logger);
+const scheduleUseCase = new ScheduleUseCase(scheduleRepository, logger);
+const scheduleController = new ScheduleController(scheduleUseCase, logger);
 
 // Middleware to validate ObjectId
 const validateObjectId = (req: any, res: any, next: any) => {

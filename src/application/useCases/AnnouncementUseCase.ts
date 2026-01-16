@@ -1,19 +1,22 @@
-import mongoose from 'mongoose';
 import { IAnnouncementRepository } from '../Interfaces/IAnnouncementRepository';
-import { IAnnouncement } from '../../infrastructure/models/AnnouncementModel';
+import { Announcement } from '../../domain/entities/Announcement';
 import { NotificationUseCase } from './NotificationUseCase';
 import { IStudentRepository } from '../../application/Interfaces/IStudent';
 import { ITeacherRepository } from '../../application/Interfaces/ITeacher';
+
+import { ILogger } from '../Interfaces/ILogger';
 
 export class AnnouncementUseCase {
   constructor(
     private announcementRepository: IAnnouncementRepository,
     private notificationUseCase: NotificationUseCase,
     private studentRepository: IStudentRepository,
-    private teacherRepository: ITeacherRepository
+    private teacherRepository: ITeacherRepository,
+    private logger: ILogger
   ) {}
 
-  async createAnnouncement(announcement: Partial<IAnnouncement>): Promise<IAnnouncement> {
+  async createAnnouncement(announcementData: Partial<Announcement>): Promise<Announcement> {
+    const announcement = Announcement.create(announcementData);
     const newAnnouncement = await this.announcementRepository.create(announcement);
 
     // Fan-out notifications
@@ -37,15 +40,15 @@ export class AnnouncementUseCase {
       // Create notifications for each user
       for (const user of targetUsers) {
         await this.notificationUseCase.createNotification({
-          userId: new mongoose.Types.ObjectId(user.id),
+          userId: user.id,
           userModel: user.model,
-          type: 'system', // or 'announcement' if enum allows, currently 'system' fits best or we update enum
+          type: 'system', // or 'announcement'
           title: 'New Announcement: ' + announcement.title,
           message: announcement.message,
           read: false,
           sender: 'Admin',
-          senderModel: 'Teacher', // Admin doesn't have a model, masking as Teacher or we update enum. Let's use Teacher for now or 'system' logic
-          role: user.model // Receiver role
+          senderModel: 'Admin',
+          role: user.model as any
         });
       }
     }
@@ -53,15 +56,15 @@ export class AnnouncementUseCase {
     return newAnnouncement;
   }
 
-  async getAllAnnouncements(): Promise<IAnnouncement[]> {
+  async getAllAnnouncements(): Promise<Announcement[]> {
     return await this.announcementRepository.findAll();
   }
 
-  async getAnnouncementById(id: string): Promise<IAnnouncement | null> {
+  async getAnnouncementById(id: string): Promise<Announcement | null> {
     return await this.announcementRepository.findById(id);
   }
 
-  async updateAnnouncement(id: string, announcement: Partial<IAnnouncement>): Promise<IAnnouncement | null> {
+  async updateAnnouncement(id: string, announcement: Partial<Announcement>): Promise<Announcement | null> {
     return await this.announcementRepository.update(id, announcement);
   }
 
@@ -69,7 +72,7 @@ export class AnnouncementUseCase {
     return await this.announcementRepository.delete(id);
   }
 
-  async getAnnouncementsByRole(role: string): Promise<IAnnouncement[]> {
+  async getAnnouncementsByRole(role: string): Promise<Announcement[]> {
       return await this.announcementRepository.findByTargetRole(role);
   }
 }

@@ -8,7 +8,7 @@ export interface IAssignmentRepository {
   findByDepartmentId(departmentId: string): Promise<Assignment[]>;
   findByTeacherId(teacherId: string): Promise<Assignment[]>;
   update(id: string, assignment: Partial<Assignment>): Promise<Assignment>;
-  delete(id: string): Promise<void>;
+  delete(id: string): Promise<boolean>;
   addSubmission(submission: AssignmentSubmission): Promise<AssignmentSubmission>; // Fixed signature
   updateSubmissionGrade(submissionId: string, grade: number, feedback?: string): Promise<AssignmentSubmission>; // Fixed signature
   getSubmissions(assignmentId: string): Promise<AssignmentSubmission[]>; // Fixed return type

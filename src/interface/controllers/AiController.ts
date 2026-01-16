@@ -3,8 +3,13 @@ import { AiUseCase } from '../../application/useCases/AiUseCase';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 import { HttpMessage } from '../../common/enums/http-message.enum';
 
+import { ILogger } from '../../application/Interfaces/ILogger';
+
 export class AiController {
-  constructor(private aiUseCase: AiUseCase) {}
+  constructor(
+    private aiUseCase: AiUseCase,
+    private logger: ILogger
+  ) {}
 
   async handleStudentChat(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

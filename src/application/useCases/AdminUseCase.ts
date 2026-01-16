@@ -31,12 +31,15 @@ interface User {
   }>;
 }
 
+import { ILogger } from "../Interfaces/ILogger";
+
 export class AdminUseCase {
   constructor(
     private adminRepository: IAdminRepository,
     private emailService: IEmailService,
     private teacherRepository: ITeacherRepository,
-    private studentRepository: IStudentRepository
+    private studentRepository: IStudentRepository,
+    private logger: ILogger
   ) {}
 
   async createAdmin(adminData: AdminInput, profileImagePath?: string): Promise<Admin> {
@@ -88,15 +91,15 @@ export class AdminUseCase {
           subject,
           html,
         });
-        console.log(`Email sent to ${admin.email}`);
+        this.logger.info(`Email sent to ${admin.email}`);
       } catch (error: any) {
         emailError = error;
-        console.warn(`Failed to send email to ${admin.email}: ${error.message}`);
+        this.logger.warn(`Failed to send email to ${admin.email}: ${error.message}`);
       }
 
       return admin;
     } catch (err: any) {
-      console.error("Create Admin Error:", err);
+      this.logger.error("Create Admin Error:", err);
       throw err;
     }
   }
@@ -222,7 +225,7 @@ export class AdminUseCase {
 
       return users;
     } catch (err: any) {
-      console.error("Search Users Error:", err);
+      this.logger.error("Search Users Error:", err);
       throw new Error(`Failed to search users: ${err.message}`);
     }
   }

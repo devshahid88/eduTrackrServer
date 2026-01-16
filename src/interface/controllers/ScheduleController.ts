@@ -4,8 +4,13 @@ import { isValidObjectId } from "mongoose";
 import { HttpStatus } from '../../common/enums/http-status.enum';
 import { createHttpError } from '../../common/utils/createHttpError';
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class ScheduleController {
-  constructor(private scheduleUseCase: ScheduleUseCase) {}
+  constructor(
+    private scheduleUseCase: ScheduleUseCase,
+    private logger: ILogger
+  ) {}
 
   async createSchedule(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

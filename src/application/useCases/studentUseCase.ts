@@ -1,8 +1,13 @@
 import { IStudentRepository } from "../Interfaces/IStudent";
 import Student from "../../domain/entities/Student";
 
+import { ILogger } from "../Interfaces/ILogger";
+
 export class StudentUseCase {
-  constructor(private studentRepository: IStudentRepository) {}
+  constructor(
+    private studentRepository: IStudentRepository,
+    private logger: ILogger
+  ) {}
 
   async createStudent(student: Student): Promise<Student> {
     return await this.studentRepository.createStudent(student);
@@ -29,7 +34,7 @@ export class StudentUseCase {
     try {
       return await this.studentRepository.searchUsers(searchTerm, role);
     } catch (err: any) {
-      console.error("Search Students Error:", err);
+      this.logger.error("Search Students Error:", err);
       throw new Error("Failed to search students");
     }
   }

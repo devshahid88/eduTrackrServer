@@ -9,7 +9,7 @@ interface ICourse {
   department: string;
 }
 
-interface IStudent extends Document {
+export interface IStudentDocument extends Document {
   username: string;
   email: string;
   firstname: string;
@@ -45,6 +45,6 @@ const StudentSchema: Schema = new Schema({
   role: { type: String, enum: ['Student'], default: 'Student' }
 });
 
-const studentModel = mongoose.model<IStudent>('Student', StudentSchema);
+const studentModel = mongoose.model<IStudentDocument>('Student', StudentSchema);
 
 export default studentModel;

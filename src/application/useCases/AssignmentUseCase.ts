@@ -7,11 +7,14 @@ import { HttpMessage } from '../../common/enums/http-message.enum';
 import { NotificationUseCase } from './NotificationUseCase';
 import { IStudentRepository } from '../Interfaces/IStudent';
 
+import { ILogger } from '../Interfaces/ILogger';
+
 export class AssignmentUseCase {
   constructor(
     private assignmentRepository: IAssignmentRepository,
     private notificationUseCase: NotificationUseCase,
-    private studentRepository: IStudentRepository
+    private studentRepository: IStudentRepository,
+    private logger: ILogger
   ) {}
 
   async createAssignment(assignmentData: Partial<Assignment>): Promise<Assignment> {
@@ -49,7 +52,7 @@ export class AssignmentUseCase {
         for (const student of enrolledStudents) {
             if (student._id) {
                 await this.notificationUseCase.createNotification({
-                    userId: new mongoose.Types.ObjectId(student._id.toString()),
+                    userId: student._id.toString(),
                     userModel: 'Student',
                     type: 'assignment',
                     title: `New Assignment: ${newAssignment.title}`,
@@ -59,7 +62,7 @@ export class AssignmentUseCase {
                     senderModel: 'Teacher',
                     role: 'Student',
                     data: {
-                        messageId: newAssignment.id?.toString() // using id as defined in interface
+                        messageId: newAssignment.id?.toString()
                     }
                 });
             }
@@ -178,7 +181,7 @@ export class AssignmentUseCase {
     
     if (updatedSubmission && updatedSubmission.studentId) {
          await this.notificationUseCase.createNotification({
-            userId: new mongoose.Types.ObjectId(updatedSubmission.studentId.toString()),
+            userId: updatedSubmission.studentId.toString(),
             userModel: 'Student',
             type: 'grade',
             title: `Grade Updated: ${assignment.title}`,
@@ -211,32 +214,54 @@ export class AssignmentUseCase {
       assignment.submissions.map(sub => [sub.studentId.toString(), sub])
     );
 
-    for (const gradeEntry of grades) {
-      if (!submissionMap.has(gradeEntry.studentId)) {
-        createHttpError(`${HttpMessage.SUBMISSION_NOT_FOUND_FOR_STUDENT} ${gradeEntry.studentId}`, HttpStatus.NOT_FOUND);
-      }
-    }
+    // Removed the strict validation loop to allow grading non-submitters
+    // by creating empty submissions for them.
 
     const updatedSubmissions: AssignmentSubmission[] = [];
     for (const gradeEntry of grades) {
-      const submission = submissionMap.get(gradeEntry.studentId);
-      if (!submission) continue;
+      let submission = submissionMap.get(gradeEntry.studentId);
+      
+      // If submission doesn't exist, create an empty one (Teacher grading a non-submitter)
+      if (!submission) {
+         try {
+             // We need student details to create a submission
+             const student = await this.studentRepository.findStudentById(gradeEntry.studentId);
+             if (!student) {
+                this.logger.warn(`Student not found for grading: ${gradeEntry.studentId}`);
+                continue; 
+             }
 
-      const submissionToUpdate = assignment.submissions.find(
-        sub => sub.studentId.toString() === gradeEntry.studentId
-      );
-      if (!submissionToUpdate) continue;
+             const newSubmissionDetails: AssignmentSubmission = {
+                 assignmentId: assignmentId,
+                 studentId: gradeEntry.studentId,
+                 studentName: `${student.firstname} ${student.lastname}`.trim() || student.username,
+                 submittedAt: new Date(),
+                 submissionContent: { text: '', files: [] },
+                 isLate: new Date() > new Date(assignment.dueDate) 
+             };
+
+             // Add the submission
+             submission = await this.assignmentRepository.addSubmission(newSubmissionDetails);
+             
+         } catch (err) {
+             this.logger.error(`Failed to auto-create submission for student ${gradeEntry.studentId}:`, err);
+             continue;
+         }
+      }
+
+      if (!submission || !submission.id) continue;
 
       const updatedSubmission = await this.assignmentRepository.updateSubmissionGrade(
-        submissionToUpdate.id!.toString(),
+        submission.id.toString(),
         gradeEntry.grade,
         gradeEntry.feedback
       );
       updatedSubmissions.push(updatedSubmission);
       
       // Notify Student
+      // ... (Rest of logic is same, but I need to include it since I am replacing block)
       await this.notificationUseCase.createNotification({
-            userId: new mongoose.Types.ObjectId(gradeEntry.studentId),
+            userId: gradeEntry.studentId,
             userModel: 'Student',
             type: 'grade',
             title: `Grade Updated: ${assignment.title}`,

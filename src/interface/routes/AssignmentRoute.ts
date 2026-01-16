@@ -13,18 +13,21 @@ import { NotificationUseCase } from '../../application/useCases/NotificationUseC
 import { NotificationRepository } from '../../infrastructure/repositories/NotificationRepository';
 import { StudentRepository } from '../../infrastructure/repositories/studentRepository';
 
-// Initialize dependencies
-const assignmentRepository = new AssignmentRepository();
-const notificationRepository = new NotificationRepository();
-const studentRepository = new StudentRepository();
+import logger from '../../infrastructure/config/logger';
 
-const notificationUseCase = new NotificationUseCase(notificationRepository);
+// Initialize dependencies
+const assignmentRepository = new AssignmentRepository(logger);
+const notificationRepository = new NotificationRepository(logger);
+const studentRepository = new StudentRepository(logger);
+
+const notificationUseCase = new NotificationUseCase(notificationRepository, logger);
 const assignmentUseCase = new AssignmentUseCase(
   assignmentRepository, 
   notificationUseCase, 
-  studentRepository
+  studentRepository,
+  logger
 );
-const assignmentController = new AssignmentController(assignmentUseCase);
+const assignmentController = new AssignmentController(assignmentUseCase, logger);
 
 // Middleware to validate ObjectId
 const validateObjectId = (req: any, res: any, next: any) => {

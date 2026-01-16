@@ -1,7 +1,12 @@
 import { AiRepository } from '../../infrastructure/repositories/AiRepository';
 
+import { ILogger } from '../Interfaces/ILogger';
+
 export class AiUseCase {
-    constructor(private aiRepository: AiRepository) {}
+    constructor(
+        private aiRepository: AiRepository,
+        private logger: ILogger
+    ) {}
 
     async generateStudentResponse(message: string, context?: any): Promise<string> {
         const prompt = this.createStudentPrompt(message, context);

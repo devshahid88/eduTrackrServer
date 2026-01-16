@@ -3,8 +3,13 @@ import Schedule from '../../domain/entities/Schedule';
 import { createHttpError } from '../../common/utils/createHttpError';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 
+import { ILogger } from '../Interfaces/ILogger';
+
 export class ScheduleUseCase {
-    constructor(private scheduleRepository: IScheduleRepository) {}
+    constructor(
+        private scheduleRepository: IScheduleRepository,
+        private logger: ILogger
+    ) {}
 
     async createSchedule(scheduleData: Partial<Schedule>): Promise<Schedule> {
         if (

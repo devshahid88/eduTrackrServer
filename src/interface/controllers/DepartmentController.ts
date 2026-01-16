@@ -3,8 +3,13 @@ import { DepartmentUseCase } from "../../application/useCases/DepartmentUseCase"
 import { isValidObjectId } from "mongoose";
 import { HttpStatus } from '../../common/enums/http-status.enum';
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class DepartmentController {
-  constructor(private departmentUseCase: DepartmentUseCase) {}
+  constructor(
+    private departmentUseCase: DepartmentUseCase,
+    private logger: ILogger
+  ) {}
 
   async createDepartment(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -15,7 +20,7 @@ export class DepartmentController {
         data: department
       });
     } catch (error: any) {
-      console.error("Create department error:", error);
+      this.logger.error("Create department error:", error);
       next(error);
     }
   }
@@ -47,7 +52,7 @@ export class DepartmentController {
         data: department
       });
     } catch (error: any) {
-      console.error("Get department error:", error);
+      this.logger.error("Get department error:", error);
       next(error);
     }
   }
@@ -80,7 +85,7 @@ export class DepartmentController {
         data: department
       });
     } catch (error: any) {
-      console.error("Update department error:", error);
+      this.logger.error("Update department error:", error);
       next(error);
     }
   }
@@ -112,7 +117,7 @@ export class DepartmentController {
         message: "Department deleted successfully"
       });
     } catch (error: any) {
-      console.error("Delete department error:", error);
+      this.logger.error("Delete department error:", error);
       next(error);
     }
   }
@@ -125,7 +130,7 @@ export class DepartmentController {
         data: departments
       });
     } catch (error: any) {
-      console.error("Get all departments error:", error);
+      this.logger.error("Get all departments error:", error);
       next(error);
     }
   }

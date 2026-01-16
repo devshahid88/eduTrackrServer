@@ -2,8 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { ResourceUseCase } from '../../application/useCases/ResourceUseCase';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 
+import { ILogger } from '../../application/Interfaces/ILogger';
+
 export class ResourceController {
-  constructor(private resourceUseCase: ResourceUseCase) {}
+  constructor(
+    private resourceUseCase: ResourceUseCase,
+    private logger: ILogger
+  ) {}
 
   async createResource(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -18,7 +23,7 @@ export class ResourceController {
         success: true
       });
     } catch (error) {
-      console.error('Error in createResource:', error);
+      this.logger.error('Error in createResource:', error);
       next(error);
     }
   }
@@ -34,7 +39,7 @@ export class ResourceController {
         success: true
       });
     } catch (error) {
-      console.error('Error in getAllResources:', error);
+      this.logger.error('Error in getAllResources:', error);
       next(error);
     }
   }
@@ -58,7 +63,7 @@ export class ResourceController {
         success: true
       });
     } catch (error) {
-       console.error('Error in getResourceById:', error);
+       this.logger.error('Error in getResourceById:', error);
        next(error);
     }
   }
@@ -84,7 +89,7 @@ export class ResourceController {
         success: true
       });
     } catch (error) {
-        console.error('Error in updateResource:', error);
+        this.logger.error('Error in updateResource:', error);
         next(error);
     }
   }
@@ -107,7 +112,7 @@ export class ResourceController {
         success: true
       });
     } catch (error) {
-        console.error('Error in deleteResource:', error);
+        this.logger.error('Error in deleteResource:', error);
         next(error);
     }
   }

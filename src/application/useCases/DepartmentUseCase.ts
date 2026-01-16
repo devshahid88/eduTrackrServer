@@ -1,8 +1,13 @@
 import { IDepartmentRepository } from "../Interfaces/IDepartmentRepository";
 import { Department } from "../../domain/entities/Department";
 
+import { ILogger } from "../Interfaces/ILogger";
+
 export class DepartmentUseCase {
-    constructor(private departmentRepository: IDepartmentRepository) {}
+    constructor(
+        private departmentRepository: IDepartmentRepository,
+        private logger: ILogger
+    ) {}
 
     async createDepartment(departmentData: Partial<Department>): Promise<Department> {
         const department = Department.create(departmentData);

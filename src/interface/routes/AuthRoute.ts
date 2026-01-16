@@ -5,11 +5,13 @@ import { AuthUseCase } from '../../application/useCases/AuthUseCase';
 import { AuthRepository } from '../../infrastructure/repositories/AuthRespository';
 import { authenticateToken } from '../middleware/auth';
 
+import logger from '../../infrastructure/config/logger';
+
 const router = Router();
 
-const authRepository = new AuthRepository();
-const authUseCase = new AuthUseCase(authRepository);
-const authController = new AuthController(authUseCase);
+const authRepository = new AuthRepository(logger);
+const authUseCase = new AuthUseCase(authRepository, logger);
+const authController = new AuthController(authUseCase, logger);
 
 // Rate limiting middleware for auth routes
 const authLimiter = rateLimit({

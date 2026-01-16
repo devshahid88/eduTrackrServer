@@ -8,8 +8,13 @@ import nodemailer from 'nodemailer';
 import { HttpStatus } from '../../common/enums/http-status.enum';
 import { createHttpError } from "../../common/utils/createHttpError";
 
+import { ILogger } from "../../application/Interfaces/ILogger";
+
 export class StudentController {
-  constructor(private studentUseCase: StudentUseCase) {}
+  constructor(
+    private studentUseCase: StudentUseCase,
+    private logger: ILogger
+  ) {}
 
   async createStudentWithImage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -88,7 +93,7 @@ export class StudentController {
           html,
         });
       } catch (emailError: any) {
-        console.warn("Email failed:", emailError.message);
+        this.logger.warn(`Email failed: ${emailError.message}`);
       }
 
       res.status(HttpStatus.CREATED).json({
@@ -231,7 +236,7 @@ export class StudentController {
   async getAllStudents(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const students = await this.studentUseCase.getAllStudents();
-      console.log("Retrieved Students:", students);
+      this.logger.info(`Retrieved Students: ${students.length}`);
       res.status(HttpStatus.OK).json({
         success: true,
         data: students.map(this.formatStudentForResponse),

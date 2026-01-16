@@ -8,11 +8,13 @@ import { authenticateToken, authorizeRoles } from "../middleware/auth";
 import { validateUser, validateUserUpdate, validateProfileImage } from "../middleware/validation";
 import { isValidObjectId } from "mongoose";
 
+import logger from "../../infrastructure/config/logger";
+
 const router = Router();
 
-const studentRepository = new StudentRepository();
-const studentUseCase = new StudentUseCase(studentRepository);
-const studentController = new StudentController(studentUseCase);
+const studentRepository = new StudentRepository(logger);
+const studentUseCase = new StudentUseCase(studentRepository, logger);
+const studentController = new StudentController(studentUseCase, logger);
 
 // Student creation - Only admins can create students
 router.post('/create', 
