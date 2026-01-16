@@ -4,6 +4,7 @@ import { TeacherRepository } from '../../infrastructure/repositories/TeacherRepo
 import { AdminRepository } from '../../infrastructure/repositories/AdminRepository';
 import { isValidObjectId } from 'mongoose';
 import { Types } from 'mongoose';
+import logger from '../../infrastructure/config/logger';
 
 export const validateObjectId = (req: Request, res: Response, next: NextFunction) => {
     // Get the ID from either teacherId or id parameter
@@ -71,9 +72,9 @@ export const validateUser = async (req: Request, res: Response, next: NextFuncti
             });
         }
 
-        const studentRepo = new StudentRepository();
-        const teacherRepo = new TeacherRepository();
-        const adminRepo = new AdminRepository();
+        const studentRepo = new StudentRepository(logger);
+        const teacherRepo = new TeacherRepository(logger);
+        const adminRepo = new AdminRepository(logger);
     
         const [existingStudent, existingTeacher, existingAdmin] = await Promise.all([
             studentRepo.findStudentByEmail(email),
@@ -118,9 +119,9 @@ export const validateUserUpdate = async (req: Request, res: Response, next: Next
         }
 
         if (email) {
-            const studentRepo = new StudentRepository();
-            const teacherRepo = new TeacherRepository();
-            const adminRepo = new AdminRepository();
+            const studentRepo = new StudentRepository(logger);
+            const teacherRepo = new TeacherRepository(logger);
+            const adminRepo = new AdminRepository(logger);
 
             const [existingStudent, existingTeacher, existingAdmin] = await Promise.all([
                 studentRepo.findStudentByEmail(email),

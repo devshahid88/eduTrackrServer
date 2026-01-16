@@ -101,7 +101,7 @@ export class AssignmentUseCase {
     return this.assignmentRepository.update(id, updateData);
   }
 
-  async deleteAssignment(id: string): Promise<void> {
+  async deleteAssignment(id: string): Promise<boolean> {
     return this.assignmentRepository.delete(id);
   }
 

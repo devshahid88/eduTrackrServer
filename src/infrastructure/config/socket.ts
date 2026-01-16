@@ -2,11 +2,12 @@ import { Server, Socket } from 'socket.io';
 import { ChatUseCase } from '../../application/useCases/ChatUseCase';
 import { ChatRepository } from '../../infrastructure/repositories/ChatRepository';
 import { NotificationRepository } from '../../infrastructure/repositories/NotificationRepository';
+import logger from '../../infrastructure/config/logger';
 
 export function initializeSocket(io: Server) {
-  const chatRepository = new ChatRepository();
-  const notificationRepository = new NotificationRepository();
-  const chatUseCase = new ChatUseCase(chatRepository, notificationRepository, io);
+  const chatRepository = new ChatRepository(logger);
+  const notificationRepository = new NotificationRepository(logger);
+  const chatUseCase = new ChatUseCase(chatRepository, notificationRepository, io, logger);
 
   io.use((socket: Socket, next) => {
     const userId = socket.handshake.auth.userId;
